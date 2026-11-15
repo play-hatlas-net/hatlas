@@ -28,3 +28,9 @@ run
 
 # Local secrets (RCON password, DB password)
 .env
+
+# Map pipeline: exported worlds, WorldPainter projects, generated outputs, venv
+worldgen/template/
+worldgen/*.world
+worldgen/out/
+worldgen/.venv/
