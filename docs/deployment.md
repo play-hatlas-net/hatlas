@@ -35,7 +35,7 @@ LAN only: SSH, RCON, VitaminMCP (never installed in production)
 |---|---|
 | OS | Debian, private fixed LAN IP behind the user's router |
 | CPU | 2 × Intel Xeon E5-2698 v3 (Haswell, 2014): 32 cores / 64 threads, 2.3 GHz base, 3.6 GHz turbo, 2 NUMA nodes |
-| RAM | 16 GB = **2 × 8 GB non-ECC DDR4-2133 UDIMM, in `DIMM_C1` (first CPU) and `DIMM_G1` (second CPU)**, one channel each, BIOS interleaves them into one NUMA node (`docs/server-tuning.md` §1.1) (+ 16 GB swap); about 8.5 GB in use today by the **current Minecraft server and website**, freed when they are replaced (✔ user, Open Question 36) |
+| RAM | Measured 2026-11-09: 16 GB = 2 × 8 GB non-ECC DDR4-2133 UDIMM (`DIMM_C1` + `DIMM_G1`), one NUMA node (`docs/server-tuning.md` §1.1) (+ 16 GB swap). Since 2026-11-12: 4 × 8 GB on the first CPU (`DIMM1`–`DIMM4`). **Planned 2026-11-14: 60 GB, all 8 slots, 32 GB on CPU 0 + 28 GB on CPU 1** (§2 challenge 6); about 8.5 GB in use today by the **current Minecraft server and website**, freed when they are replaced (✔ user, Open Question 36) |
 | Disk | NVMe Crucial P3 1 TB (807 GB free; swap partition 16 GB) + **`sda` PNY 120 GB SATA SSD** |
 | Router | NAT to this machine only: **80, 443, 25565** (✔ user checked, Open Question 38) |
 | DNS | OVH zone `hatlas.net`; the A record `play` is updated by the user's **`ovh-ddns`** container (OVH API, every 5 min, TTL 300), see §2.5 |
@@ -157,6 +157,8 @@ Challenges:
         - **Now:** move the module from `DIMM5` to **`DIMM2`** → `DIMM1` + `DIMM2` = dual channel on the
           first CPU (if the manual lists a 2-module order such as `DIMM1` + `DIMM3`, use that).
         - **With the kit:** **`DIMM1`, `DIMM2`, `DIMM3`, `DIMM4`** → quad channel; `DIMM5`–`DIMM8` empty.
+        - ✔ User (2026-11-12): **the kit is installed.** Still to do: the checks below (4 × 8 GB, four
+          different channel letters, bandwidth) and report the `dmidecode` output.
         - Check after boot: dmidecode shows the modules on **different channel letters** and none on
           `E`–`H`; sysbench bandwidth roughly doubles (2 modules) or 3–4 × (4 modules). If the board does
           not boot with the second CPU's slots empty (rare), put one module back on `DIMM5`.
@@ -170,6 +172,64 @@ Challenges:
           (quad channel should show roughly 2–4 × the MiB/sec of today).
      7. **Run one full pass of memtest86+** (`sudo apt install memtest86+`, then pick it in the boot
         menu): non-ECC used modules must be tested once before holding the game and the database.
+
+   - **RAM: 32 → 60 GB, every slot filled** (✔ user 2026-11-14: four spare modules already owned,
+     so they cost nothing). All are DDR4 desktop UDIMM non-ECC (same kind as the Aegis set) and
+     all run at **DDR4-2133** (the Xeon E5 v3 maximum; XMP ignored, the Trident Z at 1.2 V).
+
+     **Slot plan** (one module per channel = quad channel on both CPUs):
+
+     | Slot | CPU | Module |
+     |---|---|---|
+     | `DIMM1` | 0 | G.Skill Aegis 8 GB `F4-2133C15` (already there) |
+     | `DIMM2` | 0 | G.Skill Aegis 8 GB `F4-2133C15` (already there) |
+     | `DIMM3` | 0 | G.Skill Aegis 8 GB `F4-2133C15` (already there) |
+     | `DIMM4` | 0 | G.Skill Aegis 8 GB `F4-2133C15` (already there) |
+     | `DIMM5` | 1 | G.Skill Trident Z RGB 8 GB (kit `F4-3000C16D-16GTZR`) |
+     | `DIMM6` | 1 | G.Skill Trident Z RGB 8 GB (same kit) |
+     | `DIMM7` | 1 | Crucial 8 GB `CT8G4DFRA266` (DDR4-2666 CL19) |
+     | `DIMM8` | 1 | Crucial 4 GB `CT4G4DFS824A` (DDR4-2400 CL17) |
+
+     - **CPU 0 = 32 GB**, 4 identical modules, tightest timings (CL15): **faction server**. The
+       Aegis modules do not move.
+     - **CPU 1 = 28 GB**: PostgreSQL, website, Velocity, hub, Caddy, later the dungeon and mining
+       servers. Each CPU's memory controller trains its own modules, so the mixed set (it runs at
+       its slowest module's timings) never slows the faction server. The first 16 GB are spread
+       over 4 channels, the last 12 GB over 3: fine for these services. The 4 GB module is last
+       (boards expect the biggest module in the first slot).
+     - Each CPU now has **local memory**: nothing reaches RAM through the link between the CPUs
+       (today the second CPU has none).
+     - Electricity: ~2–3 W per module, about EUR 0.30 / month each at EUR 0.15 / kWh. Accepted.
+
+     **Steps:**
+     1. Power off, unplug, drain. The Trident Z heat spreaders are **~44 mm tall**, the Crucials
+        ~31 mm: look at which of `DIMM5`–`DIMM8` sit under the second CPU's cooler and put the
+        **short Crucials there**. The table above is the order when nothing is in the way; any
+        layout with one module per slot on CPU 1 is still quad channel.
+     2. **First boot:** with 8 new modules the board trains the memory: black screen for 1–3 min
+        or a few automatic reboots is normal. Do not cut the power.
+     3. BIOS: 60 GB seen at 2133 MT/s. **NUMA on / socket (node) interleaving off** (otherwise both
+        CPUs' memory is merged into one node; the 2026-11-10 reading with 2 modules showed one
+        node, so it is probably on today). **Keep channel interleaving on**: it is what gives quad
+        channel. Names differ by BIOS ("NUMA", "Socket Interleave", "Node Interleave", "Channel
+        Interleave").
+     4. **memtest86+**, at least one full pass (about **3–6 h** for 60 GB: run it overnight). On
+        errors, test the CPU 1 modules one at a time (they are the used, mixed ones).
+     5. Debian checks:
+        - `sudo dmidecode -t memory | grep -E "Locator|Size|Configured Memory Speed"` → 8 modules
+          (7 × 8 GB + 1 × 4 GB), **Configured Memory Speed 2133 MT/s** on each (the plain `Speed`
+          line is the module's own rating: 2133/2400/2666, not what it runs at);
+        - `numactl --hardware` → **2 nodes**, about 32 GB (node 0) and about 28 GB (node 1); note
+          the CPU list of each node (expected node 0 = 0–15, 32–47; node 1 = 16–31, 48–63);
+        - `sysbench memory` (step 6 above) under `numactl -N 0 -m 0`, then `-N 1 -m 1`: both should
+          show quad-channel bandwidth (node 1 may be a little lower: mixed modules, 3 channels for
+          its last 12 GB).
+     6. **Pinning** (`docs/server-tuning.md` §1, to rewrite for 2 nodes after these checks): faction
+        server on node 0's CPUs, every other service on node 1's CPUs, with compose `cpuset`.
+        Compose pins CPUs only; Linux allocates memory on the node where the process runs, so CPU
+        pinning keeps memory local in practice; a strict binding (`numactl -m 0` in the start
+        command) is to confirm then. Container memory limits and the capacity table (challenge 10)
+        are measured again with 60 GB.
 7. **Testing from home**: check the router's NAT loopback (open `https://play.hatlas.net` from the
    LAN); else a local DNS override.
 8. Outgoing mail (OVH SMTP 465/587) + **SPF, DKIM, DMARC** records on `hatlas.net` before the first

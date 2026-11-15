@@ -121,6 +121,31 @@ an anchor point; the other places (summit lake, cherry top, dark forest heart) s
 later. ✔ User (round 16): **the spawn city can be controlled** (it stays a safe zone: the fights happen
 at the 3 sites, control only changes who owns/benefits from the city).
 
+**Round 17 (plan, [`docs/cities-and-dungeons.md`](../docs/cities-and-dungeons.md)):** the city's linked
+sites become **city zones** (PvP + PvE, no block edits, NPCs inside, an event with waves and a big boss
+around an anchor point: keep a ~30 × 30 open arena near each anchor). If the dungeon server is confirmed
+(Open Question 45), the donjon places below only need an **entrance** (small safe zone + NPC); the full
+arenas move to the dungeon server's own maps.
+
+**Round 19 (2026-11-12):** a city zone's event is now **one shared run of a dungeon on the dungeon server**
+(power score per faction). On this map each of the 3 linked sites only needs an **entrance** (a small
+protected area with the entrance NPC and room for a crowd waiting for the event); the ~30 × 30 arena is
+**no longer needed**. Each site still gets its **own dungeon build** on the dungeon server (themed after the
+place: viking village, amethyst cave, port).
+
+**Round 20 (2026-11-13):** ore zones leave this map; mining moves to a **separate mining world**
+([`docs/mining-world.md`](../docs/mining-world.md)). On this island: `city_mine` is **removed**; the city gets
+**two mine entrances** (a public one and a holder-only one: small protected areas with an NPC); proposal: 3
+wild entrances at the free sites (summit lake, cherry top, dark forest heart), Open Question 84. The cave
+map itself gets its own brief later (`worldgen/mining-map.md`).
+
+**Round 21 (2026-11-16):** ✔ the **3 wild entrances** are confirmed (each leads to its own landing at the
+most opposite points of the mining map). ✔ The **amethyst cave** (§3.3) stays on this island as a place
+and event site, and gets an **entrance NPC to the amethyst region of the mining world**; the crystals are
+mined there (they regrow with the daily map), so the island cave holds amethyst as decoration only. The
+mining map is **generated every day** by a datapack, not painted in WorldPainter
+([`docs/mining-world.md`](../docs/mining-world.md) §7), so no `worldgen/mining-map.md` brief is needed.
+
 **Existing donjon builds** (`src/main/resources/structures/`) to place: `dark_forest` → dark forest heart
 (§3.6); `ocean` → the fjord (in or by the water); `sky` → **floating off the void edge**, fits the island
 well; `plain` → oak hills; `desert` → the **volcano crater** (§3.7, ✔ user); `nether_castle` → **inside the
