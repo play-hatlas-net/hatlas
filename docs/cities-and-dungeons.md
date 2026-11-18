@@ -257,7 +257,138 @@ Look and animations by **BetterModel** (free, MIT licence): **pilot first**. **N
 ModelEngine is dropped as the fallback; if BetterModel fails the pilot, the fallback is **our own models
 with display entities** (more work, no dependency). Behaviour in our code (`bosses.yml`: HP, phases, attacks
 with telegraphs and cooldowns, defences such as shield phases, damage cap per hit against 1.8 PvP bursts,
-enrage timer). It lives in `hatlas-common` (§8).
+enrage timer). It lives in `hatlas-dungeons` (§8; moved to `hatlas-common` only if another server needs it).
+
+### 4.1 Boss pipeline: how each boss is made (round 22, 2026-11-17, proposed)
+
+**Goal (user):** each dungeon type gets **3 mini-bosses + 1 final boss** tied to its ambiance (6 types × 4
+= **24 characters**), each with a full 3D model (Blockbench), hitbox, animations (walk, run, jump, attacks,
+block, defences, hit, phase change, death…), textures, sounds and effects, and fights that feel like
+Dark Souls bosses: several phases by HP and by what the player does. The NPC menu skins (shops, auction,
+Smuggler, Mayor…) stay with the `gui-art` skill (§3).
+
+**Minecraft limits that shape the design:**
+- The server ticks at 20 Hz and checks hits itself: no frame-perfect dodge. Fights are built on **long,
+  readable wind-ups** (animation + sound + particles), **ground warnings** for area attacks, and
+  **recovery windows** where the player can punish.
+- Models are **textured cubes**. AI 3D generators (Meshy, Tripo…) output triangle meshes: **not used**,
+  the conversion looks bad.
+- BetterModel plays bones as display entities (smooth client-side interpolation). The pilot checks the
+  per-bone hitbox, the cube budget and how smooth animations look.
+
+**Source of truth = files in git**, one folder per boss: `bosses/<dungeon>/<boss>/`
+| File | Content |
+|---|---|
+| `boss.yml` | the spec (format below), validated by a script |
+| `refs/` | reference images (own or licensed/CC0 only, like §3) + `style.md` of the dungeon (palette, proportions, scale) |
+| `<boss>.bbmodel` | the model: plain JSON (cubes, bones, pivots, base64 texture, keyframes), **written by a script**, polished by hand in Blockbench by the user |
+| `sounds/*.ogg` | the boss's sounds (§4.3) |
+| `out/` (git-ignored) | renders, turntables, animation previews |
+
+The generated `.bbmodel` is a **strong first draft**, not a final asset: the user keeps the final polish
+in Blockbench, and the next generation run must never overwrite a hand-edited file (the script refuses
+when the file changed since its last write).
+
+**`boss.yml` format (draft, OQ 102):**
+```yaml
+id: dark_forest_warden          # unique, used by BetterModel and the code
+kind: mini_boss                 # mini_boss | boss
+dungeon: dark_forest
+lore: "…"                       # 2–3 lines, for the designer and the wiki
+size: {width: 1.4, height: 3.2} # hitbox in blocks
+stats: {hp: 600, armor: 8, damage_cap_per_hit: 12, enrage_seconds: 300}
+phases:                         # entered by HP threshold (and optional trigger)
+  - {id: p1, hp_below: 1.0, moves: [slash, charge], idle: idle_calm}
+  - {id: p2, hp_below: 0.6, enter: roar_phase2, moves: [slash, charge, root_slam], idle: idle_angry}
+  - {id: p3, hp_below: 0.25, enter: roar_phase3, moves: [frenzy, root_slam], speed: 1.3}
+moves:
+  slash:
+    windup_ticks: 14            # animation + sound tell the player
+    active_ticks: 4
+    recovery_ticks: 20          # punish window
+    cooldown_ticks: 40
+    shape: {type: cone, range: 3.5, angle: 90}
+    damage: 9
+    animation: attack_slash
+    sounds: {windup: warden_slash_windup, hit: warden_slash_hit}
+    particles: {windup: crit, hit: sweep_attack}
+reactions:                      # what the player does → what the boss does
+  - {when: player_blocks_3_times, do: guard_break}
+  - {when: players_far, ticks: 100, do: charge}
+  - {when: healed_nearby, do: target_healer}
+defences: [{id: bark_shield, hp_below: 0.6, absorbs: 80, animation: shield_up}]
+animations: [idle_calm, idle_angry, walk, run, jump, attack_slash, charge, root_slam, frenzy,
+             shield_up, block, hit, roar_phase2, roar_phase3, death]
+```
+Every animation and sound name is written **once** in the spec; the model, the animator, the code and
+the sound step reuse those names (the validator fails on any name missing on one side).
+
+**Agents and models (OQ 100):** a pipeline with one agent per step and a **user gate** between steps,
+not one agent doing everything (a whole boss is too much for one context).
+| Step | Agent | Output | Model |
+|---|---|---|---|
+| 1. Design | `boss-designer` | `boss.yml` + concept sheet (front/side pixel art) | **Fable 5.2** (coherent, fair multi-phase fights; silhouette) |
+| 2. Model + texture | `boss-modeler` | `.bbmodel` + render | Fable 5.2 for the pilot, then compare with Opus 5.5 |
+| 3. Animations | `boss-animator` | keyframes per spec name + previews | Opus 5.5 |
+| 4. Sounds | `boss-sound` | trimmed, normalized `.ogg` + `sounds.json` entries + subtitles | Opus 5.5 |
+| 5. Behaviour | `boss-coder` | state machine + config in `hatlas-dungeons` | Opus 5.5 |
+| 6. Test | `ingame-tester` (exists) | bot fights: phase changes, wind-ups, punish windows, enrage | Opus 5.5 |
+
+Fable 5.2 costs twice as much as Opus 5.5, so it is kept for the steps where judgement matters. The
+biggest gains come from reference images, the strict spec and the visual feedback loop, not from the model.
+
+**Skill `boss-building`** (`.claude/skills/boss-building/SKILL.md`, same pattern as `map-building` and
+`gui-art`) holds the contract and stops drift:
+1. a **style guide per dungeon** (`refs/style.md`), read by every agent;
+2. the **fixed `boss.yml` format**, checked by a validator script;
+3. **constraints checked by script**, not by eye: cube budget, texture size, bone names, pivots, hitbox
+   size, each animation's length = its move's `windup + active + recovery`;
+4. **user gate** after each step: spec → concept sheet → model render → animation previews → sounds →
+   in-game test;
+5. a **cap on fix iterations** per step (e.g. 3), then stop and ask;
+6. **one boss at a time, one dungeon first** (pilot, OQ 104), then scale to the 24 characters.
+
+**Blockbench and MCP (OQ 101):** the model is written as a file by a script; a **Blockbench MCP plugin**
+(community; the maintained one is checked and its version pinned before install, like VitaminMCP) is used
+**only for previews** (screenshots, turntables, so the agent sees what it made) and small live edits while
+the user watches. Without it, previews come from a small three.js render script. Blockbench export to
+BetterModel is checked in the pilot.
+
+### 4.2 Fight design rules (for the designer agent)
+- Every attack has a **distinct tell**: wind-up pose + sound + particles, long enough to react at 20 Hz
+  with ~100 ms of ping.
+- **Phases** by HP thresholds, each changing the move set or the rhythm, with an entry animation (roar,
+  shield break) that is also a short breather.
+- **Reactions** to the player: distance (charge/ranged), repeated blocking (guard break), healers (target
+  them), groups (area attacks) — so the party roles of [`job-skills.md`](job-skills.md) matter.
+- **Punish windows** after big attacks; **damage cap per hit** and **enrage timer** against burst and
+  stalling.
+- Mini-bosses teach one mechanic each; the final boss mixes the three mini-bosses' mechanics.
+
+### 4.3 Sound (OQ 103)
+- **Delivery:** custom `.ogg` in the `hatlas` resource pack (`sounds.json` + subtitles for accessibility).
+  Positional sounds **mono**, music **stereo**; small files (every player downloads the pack).
+- **Sources (✔ user 2026-11-18, OQ 103: mostly AI generated):**
+  1. **AI sound generators** (e.g. ElevenLabs SFX, Stable Audio) for most boss sounds: wind-ups, hits,
+     voices, roars, phase changes, death. Only a tool whose plan allows **commercial use** (the server
+     sells tickets); the plan and date of generation are written in `sounds/LICENSES.md`, with the prompt
+     used, so a sound can be regenerated in the same style;
+  2. **vanilla sounds** layered and pitch-shifted from code only as filler (footsteps, small impacts);
+  3. **one music loop per final boss** (AI generated too, same licence rule), restarted from code
+     (Minecraft has no seamless loop).
+- The `boss-sound` agent writes the prompts from `boss.yml` and the dungeon's `style.md` (one sound
+  palette per dungeon), generates several takes, then trims, normalizes and converts them.
+- Each sound's source and licence is written in `sounds/LICENSES.md`.
+- **Sound is gameplay:** every attack has its own wind-up sound.
+- **Claude cannot hear audio:** it trims, normalizes loudness (ffmpeg `loudnorm`), converts and wires the
+  files; the user judges them at the sound gate.
+
+### 4.4 Pilot (✔ user 2026-11-18, OQ 104)
+One **`dark_forest` mini-boss**, the **Fungal Witch** (✔ user): spore clouds (poison zones on the ground),
+summoned mushroom minions, teleports between trees. It goes through the whole pipeline, then into
+BetterModel on the test server, fought by bots. It answers: BetterModel per-bone hitboxes, cube budget,
+animation smoothness, Blockbench MCP usefulness, Fable vs Opus for the modeler, and the time per boss.
+Then the rest of `dark_forest` (2 mini-bosses + boss), then the other dungeons. It belongs to epic 2 (§9).
 
 ---
 
@@ -507,7 +638,7 @@ restarts on its own; its config stays small.
 | Epic | Content | Then |
 |---|---|---|
 | **1. Foundations + jobs** | `hatlas-common` skeleton, GUI skin framework, `gui-art` skill/agent; jobs without a faction, job XP from quests, **job skill trees** (generated per §3.4–3.6 of [`job-skills.md`](job-skills.md)), Wizard NPC + Alchemist *Magic reroller*, shop Workshop, job switch price; Jokeyrini per NPC + key cap | internal tests |
-| **2. Dungeons** | `hatlas-dungeons`: fight zones, bosses + BetterModel pilot, copies, handoff, outbox, cooldowns, proxy `dungeon-1` | **beta** |
+| **2. Dungeons** | `hatlas-dungeons`: fight zones, bosses + BetterModel pilot (boss pipeline §4.1, `dark_forest` pilot first), copies, handoff, outbox, cooldowns, proxy `dungeon-1` | **beta** |
 | **3. Mining world** | `hatlas-mining`, handoff/ledger to common, ore pass, reset, entrances, ore zones removed, mining map ([`mining-world.md`](mining-world.md) §8) | **beta** |
 | **4. Cities** | cities, zones, events (last hit, spawn circles, play hours), Mayor, rewards, skins, holder mine entrance | **beta** |
 | **5. Launch** | load test with 40 bots across faction, dungeon and mining servers, then open | — |
@@ -535,6 +666,9 @@ restarts on its own; its config stays small.
   (recommended)?
 - **88** Participant: any damage counts, no minimum, **+ assists** (a heal or taunt on a player who hit)
   (recommended)? Item dropped at the feet **locked to its owner**, lost if left behind (recommended)?
+- 100–104 ✔ (round 22, 2026-11-18): Fable 5.2 designer (+ modeler in the pilot), Opus 5.5 for the rest;
+  Blockbench MCP for previews only; `boss.yml` draft approved; sounds **mostly AI generated** (commercial
+  licence, prompts recorded); pilot = the **Fungal Witch** of `dark_forest`.
 - 73–75 and 89–91: job questions, in [`job-skills.md`](job-skills.md) §8. 78–84 and 94–97: mining world, in
   [`mining-world.md`](mining-world.md) §10. 92–93: [`economy-observatory.md`](economy-observatory.md).
   98–99: [`cross-server-items.md`](cross-server-items.md).

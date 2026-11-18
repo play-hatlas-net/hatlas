@@ -520,6 +520,13 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 98. **Travel bag** ([`docs/cross-server-items.md`](docs/cross-server-items.md)): only hotbar + armour + off-hand + bag travel, the main inventory stays home, same for dungeons and mining (recommended)? No re-entry while the bag storage holds items, junk filter (recommended)?
 99. **Bag sizes**: 4 / 8 / 12 / 18 / 27 as a faction skill, factionless players keep 4 (recommended)? Daily duplicate scan of unique item ids (recommended)?
 
+**Round 22 (2026-11-17)**: **boss pipeline** (user request: 3 mini-bosses + 1 boss per dungeon type, full Blockbench models, animations, sounds, Dark Souls-like phases) planned in [`docs/cities-and-dungeons.md`](docs/cities-and-dungeons.md) §4.1–4.4: `boss.yml` spec per boss, `.bbmodel` written by script then polished by the user, skill `boss-building` with one agent per step and user gates, no AI mesh generators.
+100. ~~**Boss agents and models**~~ — ✔ answered 2026-11-18: one agent per step with a user gate; **Fable 5.2** for the designer (and the modeler in the pilot, then compared with Opus), **Opus 5.5** for animator, sound, coder, tester.
+101. ~~**Blockbench MCP**~~ — ✔ answered 2026-11-18: `.bbmodel` written by script, polished by the user; a pinned community Blockbench MCP plugin **for previews and small live edits only**.
+102. ~~**`boss.yml` format**~~ — ✔ answered 2026-11-18: the draft of [`docs/cities-and-dungeons.md`](docs/cities-and-dungeons.md) §4.1 is approved (tuned by the pilot).
+103. ~~**Boss sounds**~~ — ✔ answered 2026-11-18: **mostly AI generated** (tool plan allowing commercial use, prompt + plan + date in `sounds/LICENSES.md`), vanilla only as filler, AI music loop per final boss (§4.3).
+104. ~~**Pilot boss**~~ — ✔ answered 2026-11-18: the **Fungal Witch**, a `dark_forest` mini-boss (spore poison zones, mushroom minions, teleports between trees), through the whole pipeline first (§4.4).
+
 ## Changelog
 
 The changelog lives in [`docs/claude-changelog.md`](docs/claude-changelog.md). Read it at session start and append an entry (newest first) after every change.
