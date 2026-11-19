@@ -242,6 +242,10 @@ built** or that **break PvP**. So the trees are produced in this order, each ste
 6. **Your review, one job at a time** (gate), then the combo matrix is re-checked, then the gui-art
    generator draws the tree from the same file.
 
+> ✔ Round 23: method approved, Miner + Hunter first. **Runes** ([`runes.md`](runes.md)) are part of steps 1–3:
+> the effect catalogue = [`runes.md`](runes.md) §4, the rules sheet adds §6 (no stacking, diminishing
+> returns, PvP values), the combo matrix adds the rune wheel and the counter check of §11.
+
 #### 3.6.1 The six steps in detail (round 21, user asked)
 
 The idea in one line: **first decide what the code can do, then the rules, then who combines with whom,
@@ -353,9 +357,9 @@ advancement screen cannot send clicks to the server, so it is only a possible **
   deposit and take out, members deposit only); job switch price default in yml, 24 h cooldown. 74 →
   details given in §3.6.1, approval re-asked (OQ 90); ✔ combo items usable by anyone with the node, any
   faction. 75 → explained in §3.2.1, re-asked (OQ 91).
-- **89** Auction house: the buyer also pays **from their own inventory** (recommended, same rule as shops),
-  and the money still goes to the **seller's faction vault** (recommended, only owner/LEADER can sell)?
-- **90** Approve the 6-step method as detailed in §3.6.1, steps 1–3 for all jobs, then trees for Miner +
-  Hunter first (recommended)?
-- **91** Role flavours and sample branches of §3.2.1 (Miner wall + smith, Lumberjack bodyguard + control,
-  Hunter damage, Farmer sustain, Alchemist burst + Wizard): OK, or changes?
+- 89 ✔ (round 23): auction buyers pay from their own inventory, the money still goes to the seller's faction
+  vault. 90 ✔ the 6-step method, steps 1–3 for all jobs, then **Miner + Hunter first**. 91 ✔ roles and
+  sample branches OK.
+- Round 23 adds **Runes** (two rune specialities per job, rune forks, bridge nodes, effect catalogue with
+  counters, Summoner for the Alchemist): [`runes.md`](runes.md), questions 105–113. The effect catalogue of
+  step 1 starts from [`runes.md`](runes.md) §4.

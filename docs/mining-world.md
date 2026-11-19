@@ -110,21 +110,44 @@ vanilla ores (✔). The **amethyst cave** stays on the island map as a place (an
 the **entrance to the amethyst region** of the mining world (✔ user, round 21). Its future "custom crystal
 item and shard" (`worldgen/map.md` §3.3) moves to that region: crystals regrow by themselves every day.
 
-**M12. No nether portals (round 21).** Obsidian frames can be built in the mining world (blocks may be
-placed). Proposal: `allow-nether=false` and `allow-end: false` on the mining and dungeon servers (no Nether
-or End world at all), plus `PortalCreateEvent` cancelled as a second lock. Ender pearls work but cannot
-cross the bedrock shell or the world border. (Dungeons: blocks cannot be changed there anyway.)
+**M12. No portals at all (✔ rounds 21–23).** ✔ User: **nether, end and any other portal blocked** on the
+mining and dungeon servers. `allow-nether=false` and `allow-end: false` (no Nether or End world at all),
+`PortalCreateEvent` cancelled, end portal frames and gateways refused. Ender pearls work but cannot cross
+the bedrock shell or the world border.
 
-**M13. Structures with villagers (round 21).** A farming village in a cave brings **villagers**, and
-villager trading would be a second economy beside rubies (emeralds, mending books, cheap food), plus iron
-golems to farm. Proposal: structure pieces **without villagers and golems** (or villagers that do not trade:
-no profession, `setAI(false)` decoration). Same for wandering traders: no spawn. Loot chests in structures
-use **our loot tables** (no rubies in chests, so `MINE` stays the only source).
+**M13. Structures (✔ round 23).** ✔ User: **only our own structures** (no vanilla ancient cities, trial
+chambers, mineshafts…), e.g. a cave forest or a farming village, each clearing its own room. ✔ **No
+villagers or golems** (villager trading would be a second economy). Loot chests use **our loot tables** (no
+rubies in chests, so `MINE` stays the only source). User idea: **a skill and an agent to generate them**
+(M16, OQ 116).
 
-**M14. Landings on random terrain.** Each day's terrain is new, but landings must be in the same place (the
-entrance NPCs point to them). The generator **carves a hall** (sphere/room) at each fixed landing position
-and pastes the landing build (`.nbt`: floor, light, exit NPC spot), then **guarantees a path** from each
-landing to the main network (§7.4).
+**M14. Landings chosen by each day's generation (✔ round 23).** ✔ User: each mine entrance leads to **its
+own location, chosen during generation**, and **every new map moves the landings**. Proposal: each entrance
+owns a **sector of the landing ring** (§4); the generator picks the best spot in that sector (a large
+room, solid floor, connected to the network), carves a hall, pastes the landing build (`.nbt`: floor,
+light, exit NPC) and writes the day's landing table. The entrance NPC on the faction server opens a
+**skinned menu** (`gui-art`) showing the destination, today's ore bonus and the closing time; clicking
+"Enter" starts the handoff and the player lands at today's spot.
+
+**M15. Death in the mining world (✔ round 23, user).** On death the player **keeps armour, hotbar and
+off-hand** and **loses what they looted**:
+- In the mining world, **everything picked up goes into the travel bag, never into the hotbar** (mined
+  blocks, ores, rubies, mob drops). Bag full → the item **stays on the ground** (any player may take it).
+- On death the bag's content drops as a **lost bag** (one invulnerable bag entity at the death spot, last
+  safe position if the player died in lava): **any player can open it and take items** into their own bag.
+- It **despawns** after `death.lost_bag_seconds` (yml, proposal 300 s) and its content is **lost for
+  good**: the punishment for dying. The owner can run back from the landing to get it first.
+- Rubies in a lost bag keep their owner like dropped rubies (`PICKUP` row when another player takes them,
+  `LOST` at despawn); lost bags still on the ground at the 06:00 reset are lost.
+- Items the player packed into the bag before entering are lost too (the bag is the risk zone; the hotbar
+  is safe). Dungeons keep their own rule (keep inventory, round 19).
+
+**M16. A skill and agent for cave structures (user idea, round 23).** Same pattern as the `boss-building`
+and `map-building` skills: skill `cave-structures` + agent `structure-builder` (proposal): brief per
+structure → a Python script writes the build as an `.nbt` structure (palettes, rooms, props, procedural
+variation) → preview renders → **user approval gate** → exported into the datapack as jigsaw pools with
+`terrain_adaptation` (the structure clears its own room). Hand edits in game (structure block) are never
+overwritten by a regeneration (hash file, like the boss models).
 
 ---
 
@@ -134,22 +157,24 @@ landing to the main network (§7.4).
 |---|---|
 | PvP | **off** (✔) |
 | PvE | **on** (✔): vanilla cave mobs, spawning capped by config |
-| Blocks | break (ruby: iron+ pickaxe) and **place** (ladders, torches, pillars) — wiped by tomorrow's map (OQ 94) |
-| Death | proposal: **keep inventory**, respawn at the landing used (OQ 94, not answered yet) |
-| Fall damage | on; big falls end in water pools (OQ 94) |
+| Blocks | break (ruby: iron+ pickaxe) and **place** (ladders, torches, pillars) — wiped by tomorrow's map (OQ 114) |
+| Pick-up | **into the travel bag only**, never the hotbar (✔ round 23, M15) |
+| Death | ✔ round 23: **armour, hotbar, off-hand kept**; the bag drops as a **lost bag** anyone can loot, despawns after `death.lost_bag_seconds` (M15); respawn at the landing used |
+| Fall damage | on; big falls end in water pools (OQ 114) |
 | Limit | **bedrock shell** all around the potato + world border; no surface (✔) |
-| Portals | **none** (✔, M12) |
+| Portals | **none of any kind** (✔, M12) |
 | Drop key | disabled; containers refused; ender chest off |
 | AFK | sent back after 10 min (config) |
 | Combat | entering refused while combat-tagged on the faction server |
-| Factionless players | may enter (✔); travel bag of 4 slots (OQ 99) |
+| Factionless players | may enter (✔); travel bag of 4 slots (✔ round 23) |
 
 ## 4. Entrances and landings
 
 - **Entrance** (faction server): an NPC in a small protected area; `id`, landing, `holder_only_city`.
   Admin: `/mine entrance create <id> <landing> [holder-of <city>]`, `remove`, `list`.
-- **Landing** (mining server): a **fixed position** in map coordinates + an exit NPC. Admin: `/mine landing
-  set <id>` (stored in the database); the generator carves and builds it every day (M14).
+- **Landing** (mining server): ✔ round 23: **chosen by each day's generation** inside the entrance's sector
+  of the ring + an exit NPC (M14). Admin: `/mine sector set <entrance> <from-angle> <to-angle>` (stored in
+  the database); `/mine landing show` lists today's spots.
 - **Exit:** exit NPC or `/mine leave` → back **to the entrance used**.
 - Per city: one public entrance + one holder entrance. **Wild entrances (✔ round 21): 3**, at the summit
   lake, the cherry top and the dark forest heart (not in safe zones), **each to its own landing**. Amethyst
@@ -256,9 +281,11 @@ Noise caves are beautiful but **not guaranteed connected**: a landing can end in
 | Structure | How | Notes |
 |---|---|---|
 | **Forest hollow** (large pillar cave with a wooden forest) | a custom **cave biome** where trees grow on the cave floor (placed features with the `environment_scan` modifier, the way vanilla lush caves place moss and azaleas), moss/grass floor, glow lichen light | pure datapack |
-| **Farming village / alchemist ruins / dwarven halls** | our own **jigsaw structures** with a fixed `start_height` in the middle layers, `terrain_adaptation: beard_box` or `encapsulate` (the structure clears its own room, like ancient cities and trial chambers), pieces with **rigid projection**; they can **reference vanilla village pieces by id** (no Mojang files copied) or our `.nbt` builds | villagers/golems removed (M13) |
-| **Vanilla structures that work underground** | mineshafts, monster rooms, geodes, ancient cities, trial chambers: enabled by structure sets in the datapack | trial chambers: their vaults and keys must not clash with our key items (check) |
-| Vanilla structures that need a surface | villages, mansions, temples | not usable as-is (they snap to the surface); hence our own versions above |
+| **Farming village / alchemist ruins / dwarven halls** | our own **jigsaw structures** with a fixed `start_height` in the middle layers, `terrain_adaptation: beard_box` or `encapsulate` (the structure clears its own room, like ancient cities and trial chambers), pieces with **rigid projection**, built from **our own `.nbt` pieces** (✔ round 23: no vanilla structures) | villagers/golems removed (M13) |
+| ~~Vanilla structures that work underground~~ | mineshafts, monster rooms, ancient cities, trial chambers | ✘ **not used** (✔ user, round 23: only our own structures) |
+| Vanilla structures that need a surface | villages, mansions, temples | not usable (they snap to the surface) |
+
+Our structures are made by the `cave-structures` skill and `structure-builder` agent (M16, OQ 116).
 
 **Ores in structure caves: +30 % of all ores** by default (✔ user), `ores.yml > structure_bonus: 0.30`: the
 ore pass reads the structure bounding boxes of the chunk (Paper exposes generated structures) and applies
@@ -318,16 +345,19 @@ Epic **mining world** (after the dungeon epic, which builds the handoff; beta at
   unbreakable limit, no surface, no nether portals. 81 ✔. 82 ✔ vanilla ores on the island; amethyst cave =
   entrance to an amethyst region. 83 ✔ low ruby weights, daily cap off by default. 84 ✔ 3 wild entrances to
   3 opposite landings.
-- **94** Death in the mining world: keep inventory, respawn at the landing (recommended)? Fall damage on with
-  water at big falls (recommended)? Block placing allowed (recommended)?
-- **95** Generation: tomorrow's map built at 04:45 by a generator container, yesterday's kept if it fails
-  (recommended)? Datapack noise + our passes, not Terra or a Java generator (recommended)? Daily ore
-  variation = **one factor 1.00–1.30 for all ores** (recommended) or one factor per ore?
-- **96** Villages in caves without villagers or golems, structure chests with our loot tables (no rubies)
-  (recommended)? Which structures at launch: forest hollow, farming village, alchemist ruins, mineshafts,
-  geodes (recommended), + ancient city / trial chambers?
-- **97** Landing ring layout: 3 wild landings 120° apart near the edge, city landings between, holder and
-  amethyst sectors apart (recommended)? The amethyst region open to everyone (recommended) or a city reward?
+- 94 ✔ (round 23): armour, hotbar, off-hand kept; loot goes to the bag only; the bag drops as a **lost
+  bag** anyone can loot, despawn time in yml (M15). 95 ✔ 04:45 generator, datapack + our passes, **one daily
+  factor 1.00–1.30 for all ores**. 96 ✔ partly: **our own structures only**, no villagers/golems; which
+  ones at launch → OQ 116. 97 ✔ ring layout; landings **chosen by each day's generation** (M14). All
+  portals blocked (M12).
+- **114** Death details: bag full → items stay on the ground (recommended)? Lost bag despawn **300 s**
+  (recommended)? Items packed in the bag before entering are lost too (recommended)? Fall damage on with
+  water at big falls, block placing allowed (still unanswered, recommended)?
+- **115** Landing sectors per entrance + the skinned entrance menu (destination, today's ore bonus,
+  closing time) (recommended)? Amethyst region open to everyone (recommended) or a city reward?
+- **116** Skill `cave-structures` + agent `structure-builder` with a user gate (recommended)? Structures at
+  launch: forest hollow (cave biome), farming village, alchemist ruins, dwarven halls (recommended)? Amethyst
+  **geodes** (a vanilla *feature*, not a structure) allowed in the amethyst region (recommended)?
 
 [wiki: Caves]: https://minecraft.wiki/w/Caves
 [Chunksmith]: https://modrinth.com/mod/chunksmith

@@ -95,7 +95,14 @@ circulation, so a crisis corrects itself.
 weights in the mining world, the travel bag size) and the **drains** (shop burns, job switches, Wizard,
 crystal costs). Prices are the last lever, not the first.
 
-**Proposal, in three steps:**
+**✔ Decided (round 23, user): drop the price index.** Server prices are **plain values in yml** (defaults
+set by admins); the observatory **suggests** changes and **admins apply them by hand**. Automatic slow
+changes (at most ±5 % per week) only **after the beta**, if still wanted. **The first lever is how many
+rubies are mined** (mining ruby weights, daily variation, travel bag size), not prices. The table below is
+the round 21 proposal, kept for reference: step 1 = suggestions only, step 2 = admins edit the yml values,
+step 3 = after the beta only.
+
+**Proposal of round 21, in three steps:**
 
 | Step | What | When |
 |---|---|---|
@@ -115,9 +122,8 @@ tiers of the city rewards already exist). To discuss only if the beta shows the 
 
 ## 6. Open questions (mirrored in `CLAUDE.md`)
 
-- **92** Observatory: privacy option **A** (public aggregates, own and faction details when logged in)
-  (recommended), or B / C? Days cut at **midnight Europe/Paris** (recommended)? Optional "whale watch" of
-  movements ≥ 500 gems, 24 h delay (recommended: later, if asked)?
-- **93** Price index: start in **suggest** mode, then manual, automatic only after the beta with damping
-  (±5 %/week, 0.5×–2×, active supply) (recommended)? Faucet (mining ruby weights) as the first automatic
-  lever (recommended)?
+- 92 ✔ (round 23): **public totals only** (so no faction learns whom to raid); each player sees their own
+  history and their faction's vault when logged in. Days cut at midnight Europe/Paris and no whale watch
+  (taken as accepted, say if not).
+- 93 ✔ (round 23): **no price index**; prices are yml values, suggestions from the observatory, applied by
+  hand; automatic ±5 %/week only after the beta; mining output is the first lever.

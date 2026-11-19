@@ -122,15 +122,17 @@ slots in the mining world only) — to decide when the Miner tree is generated.
 - **The stash is a second inventory to protect.** It never moves (owner = faction server only), it is
   written in the same transaction as the handoff row, and the player cannot join the faction server
   without getting it back, so it cannot be lost or duplicated.
-- **Death on the target server:** keep inventory (dungeons ✔; mining: OQ 94), so the bag content is never
-  dropped.
+- **Death on the target server:** dungeons keep inventory (✔ round 19). **Mining world (✔ round 23):**
+  loot goes **only into the bag**; on death armour, hotbar and off-hand are kept, the bag drops as a **lost
+  bag** any player can loot, and it despawns after a yml delay ([`mining-world.md`](mining-world.md) M15).
 - **Disconnect, reset kick, crash:** the hotbar + armour + bag content is written back exactly like the
   full inventory of option A; nothing else changes in the protocol.
 
 ## 4. Open questions (mirrored in `CLAUDE.md`)
 
-- **98** Option D (hotbar + armour + off-hand + travel bag travel; the main inventory stays home), the same
-  for dungeons and the mining world (recommended)? Cannot enter again while the bag storage holds items
-  (recommended)? Junk filter (recommended)?
-- **99** Bag sizes 4 / 8 / 12 / 18 / 27 as a faction skill, factionless players keep 4 (recommended)?
-  Daily duplicate scan of unique item ids (recommended)?
+- 98 ✔ (round 23): the duplication protocol of §2 (one-owner row, target never trusts its player file,
+  ender chest/containers/drops off, crash = lose ≤ 1 min, never gain); **option D**: only hotbar, armour,
+  off-hand and the travel bag travel, the main inventory stays home. 99 ✔ bag sizes **4 / 8 / 12 / 18 /
+  27** as a faction skill like the vault.
+- Taken as accepted with option D (say if not): no re-entry while the bag storage holds items, the junk
+  filter, the daily duplicate scan, factionless players keep 4 slots.

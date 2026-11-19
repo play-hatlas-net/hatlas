@@ -20,7 +20,7 @@
 | City control: **more than half of its zones**; a city **changes hands only when another faction holds more than half** | ✔ rounds 18–20 |
 | Event run: **PvP on, no key, max 4 players per faction**, random spawn in an admin-set **circle (radius 8)** per zone | ✔ round 20 (§6.2) |
 | Event times: **only inside play hours** (Europe/Paris), announcements **30 / 15 / 5 min** before, **timeout 60 min**, all in yml | ✔ round 20 |
-| Power score points go to the faction that deals **the last hit** (makes builds and combos matter) | ✔ round 20 (C33) |
+| ~~Power score~~ → **rune souls**: the last hit on a mini-boss gives its rune soul; the zone changes hands only when the final boss dies | ✔ round 20 (C33), changed round 23 ([`runes.md`](runes.md) §9) |
 | Rewards of control: daily XP by size tier 1–4 / 5–24 / 25+ (× 1.5 / 1.0 / 0.6), **shop tax** 8 / 5 / 2 %, 5 % discount, own Jokeyrini, Mayor title, +1 dungeon run, +10 % job XP, banners, welcome message, **armour/weapon skins**; all in yml; **no free teleport** | ✔ round 20 (§6.4) |
 | **Ruby mining right → the mining world**: ore zones leave the faction server; each city has a mine entrance + a **holder-only entrance to a sealed cave with +70 % ruby** | ✔ round 20 ([`mining-world.md`](mining-world.md)) |
 | Dungeon rules: join mid-run, one run per faction, **3 h cooldown per dungeon tied to the player**, **3 runs per day**, keep inventory, no drops, 10 min reconnect | ✔ round 19 (§7.5–7.8) |
@@ -55,7 +55,25 @@
 
 ---
 
-## 2. Challenges after round 21
+## 2. Challenges after round 23
+
+### 2.0 Round 23 (2026-11-19): answers
+
+✔ **Decided by the user:**
+- **OQ 72 changed: mini-bosses no longer give power points.** "A faction holding all the mini-bosses should
+  not win, otherwise the last boss is not worth fighting." Each mini-boss now gives a **rune soul** to the
+  faction of the last hit, which boosts **only that faction's players whose skills use that rune** (user's
+  example: the Fire soul boosts a tank who took the Fire node *fire defense*). Plan:
+  [`runes.md`](runes.md) §9. **The zone only changes hands when the final boss dies**; proposal: it goes to
+  the faction of **the last hit on the final boss** (power score removed, OQ 112). Timeout: the holder keeps
+  the zone (✔ round 21).
+- **85** ✔ rejoin after **60 s** (yml), restocking at home accepted.
+- **86** ✔ **each faction spawns in its own circle, picked at random** from the dungeon's circles.
+- **87** ✔ unified `/dungeon` commands, **`/donjon` removed**; **`/dungeon doctor <name>`** checks a
+  dungeon or a city dungeon.
+- **88** ✔ loot counts **any damage + assists** (a heal or taunt on a player who hit); a dropped item is
+  **locked to its owner**.
+- New feature: **Runes** (elements for the job skills, effects and counters, Summoner): [`runes.md`](runes.md).
 
 ### 2.1 Round 21 (2026-11-16): answers and new challenges
 
@@ -293,6 +311,7 @@ when the file changed since its last write).
 ```yaml
 id: dark_forest_warden          # unique, used by BetterModel and the code
 kind: mini_boss                 # mini_boss | boss
+rune: nature                    # mini-bosses: fire|frost|storm|nature, the soul given to the last-hit faction (round 23, runes.md §9, OQ 112)
 dungeon: dark_forest
 lore: "…"                       # 2–3 lines, for the designer and the wiki
 size: {width: 1.4, height: 3.2} # hitbox in blocks
@@ -439,11 +458,12 @@ leave the faction server in round 20). No claims, no faction creation, no outpos
   **5 s spawn protection**, **no PvP between allies**, rejoin after `event.rejoin_cooldown_seconds: 60` if
   a slot is free (C32, C40, C42).
 - **During the event the holder keeps the zone** (✔).
-- **Power score** (✔ round 19), per faction, config in the zone's dungeon file:
-  `power.mini_boss: 10`, `power.boss_multiplier: 2.5` (→ boss = 25), `power.wave: 0`. ✔ Round 20: the points of a
-  mini-boss or the boss go to the faction of **the last hit** (C33).
-- **End:** when the **final boss dies**, the faction with the **highest total power score** gets the zone;
-  then after `boss_exit_delay_seconds` every player goes back to the faction server **at the spot they left**.
+- ~~**Power score**~~ (rounds 19–21) — **replaced in round 23** (✔ user): a mini-boss gives its **rune
+  soul** to the faction of the last hit (C33 credit rules still apply), boosting only that faction's players
+  of that rune until the event ends ([`runes.md`](runes.md) §9).
+- **End:** when the **final boss dies**, the zone goes to the faction of **the last hit on the boss**
+  (proposal, OQ 112); then after `boss_exit_delay_seconds` every player goes back to the faction server
+  **at the spot they left**.
 - **Timeout:** no boss kill before the event timeout → resolved by nobody, **the holder keeps the zone**
   (✔ round 21, explained in C39).
 - Lifecycle: `SCHEDULED → ANNOUNCED → RUNNING → RESOLVED | EXPIRED`. A restart of either server during an
@@ -658,14 +678,10 @@ restarts on its own; its config stays small.
   rules, 30 > 25 intended, ties holder then first, timeout holder keeps (C39). 76 ✔ personal roll + last-hit
   bonus roll, participant = dealt damage, full inventory → drop at the feet. 77 ✔ skins while holding, one
   set per city.
-- **85** Rejoin after 60 s lets a player restock at home (C42): keep 60 s (recommended), longer, or only after
-  a disconnect?
-- **86** One spawn circle per faction in city events (factions spread over the circles) (recommended)?
-- **87** Unified `/dungeon create <dungeon|city> <name>` with rules profiles in `dungeons.yml > kinds`, city
-  zone linked by `/cityzone create <zone> <city> <dungeon>`, legacy `/donjon` removed with the dungeon epic
-  (recommended)?
-- **88** Participant: any damage counts, no minimum, **+ assists** (a heal or taunt on a player who hit)
-  (recommended)? Item dropped at the feet **locked to its owner**, lost if left behind (recommended)?
+- 72 changed (round 23): mini-bosses give **rune souls**, not points; the zone changes hands only when the
+  final boss dies (→ OQ 112). 85 ✔ 60 s. 86 ✔ one random circle per faction. 87 ✔ unified `/dungeon`,
+  `/donjon` removed, `/dungeon doctor <name>`. 88 ✔ any damage + assists, dropped item locked to its owner.
+- 105–113: runes, in [`runes.md`](runes.md) §12.
 - 100–104 ✔ (round 22, 2026-11-18): Fable 5.2 designer (+ modeler in the pilot), Opus 5.5 for the rest;
   Blockbench MCP for previews only; `boss.yml` draft approved; sounds **mostly AI generated** (commercial
   licence, prompts recorded); pilot = the **Fungal Witch** of `dark_forest`.
