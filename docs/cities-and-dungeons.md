@@ -559,6 +559,17 @@ changing both the body and the fight. Minions are exempt.
       sounds: {start: root_tear}
   ```
 
+**Format extensions** (✔ user 2026-11-20, from the Fungal Root iteration 5):
+- on a zone: `reach` (how a weak point is hit: `bow`, or the moves/states that bring it in melee reach,
+  e.g. `[stagger, cast_rain.recovery, drink_sap]`), `break_hp: {base, per_extra_player}`, `reward`
+  (✔ default: **one extra loot roll per participant of the breaking party**, only if broken before the
+  HP trigger), `heal_interrupt` (factor against a heal channel);
+- on a mutation: `transition_ticks` (the boss cannot act: a punish window), `show_bones` (hidden in the
+  model until the mutation, e.g. a stump), `substitute: {removed_move: replacement}` (every phase,
+  shield or reaction naming a removed move uses the replacement; Fungal Root: `spore_cloud → spore_rain`),
+  `speed` = **movement only** (cooldowns and punish windows keep the phase values).
+- Fungal Root values ✔: `spit_root` breaks at 90 + 15 per player above 2 (≈ 15 % HP), cap ×1.0.
+
 ---
 
 ## 5. Cities

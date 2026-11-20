@@ -556,6 +556,7 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 125. ~~**Breakable parts**~~ — ✔ answered 2026-11-20: yes, a zone may have its own HP; breaking it triggers the mutation early **with a reward**.
 126. ~~**Fungal Root zones and mutation**~~ — ✔ answered 2026-11-20: **now**, in an extra step 1 round (iteration 5, beyond the cap of 3 by the user's go).
 - ✔ user 2026-11-20 (round 25, no question): **every mini-boss and final boss** must have **a mob phase** (side wave in parallel or protector summon), a **protector timeout** (`protect_timeout_ticks`, default 60 s, max 120 s, bugged minions teleported back after 10 s) and **at least one mutation** at ≤ 40 % HP in the last or second-to-last phase; minions exempt (skill `boss-building` step 1 and §5, plan §4.5).
+- ✔ user 2026-11-20: Fungal Root iteration 5 **approved** (extra loot roll for breaking the spit root, `spore_rain` substitutes `spore_cloud`, speed = movement only, break at ≈ 15 % HP, cap ×1.0); format extensions `reach`, `break_hp {base, per_extra_player}`, `reward`, `transition_ticks`, `show_bones`, `substitute` added to plan §4.6; **step 2 (model) started**.
 
 ## Changelog
 
