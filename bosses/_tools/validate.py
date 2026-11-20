@@ -1,0 +1,446 @@
+"""Validator of the boss pipeline (.claude/skills/boss-building/SKILL.md §5).
+
+Usage:
+    python bosses/_tools/validate.py bosses/<dungeon>/<boss> --step design [--report FILE] [--iteration N]
+
+Steps (each one also runs the checks of the steps before it):
+    design     boss.yml format, names, mechanics (plan §4.1, §4.2, §4.5) + concept sheet     IMPLEMENTED
+    model      .bbmodel: bones, cube budget, 1/16 grid, texture, palette, hitbox             not yet
+    animation  one animation per spec name, length = windup + active + recovery              not yet
+    sound      .ogg per sound name, mono/stereo, loudness, LICENSES.md                       not yet
+The parts marked "not yet" are written by the agent of the step that first needs them; until then
+they report NOT YET (and fail the run when that step is asked for, so a gate cannot pass on a stub).
+
+Output: a markdown table of checks (PASS / FAIL / INFO / NOT YET) on stdout and in --report.
+Exit code: 0 = no FAIL, 1 = at least one FAIL (or an unimplemented step was asked), 2 = cannot read.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+from common import (CUBE_BUDGET, FIXED_BONES, PX_PER_BLOCK, RUNES, hexa, load_palette,  # noqa: E402
+                    load_yaml)
+
+STEPS = ["design", "model", "animation", "sound"]
+KINDS = ["minion", "mini_boss", "boss"]
+MOVE_KINDS = ["attack", "summon", "heal"]
+MIN_WINDUP = 10            # ticks, dodgeable hit at 20 Hz with ~100 ms ping (skill §4 step 1)
+MIN_PUNISH = 20            # ticks: a boss needs at least one recovery this long
+PARTY_MAX = 8
+# animations every character must have, and names the code plays without a move naming them
+REQUIRED_ANIMS = {"minion": ["spawn", "idle", "walk", "attack", "death"],
+                  "mini_boss": ["spawn", "walk", "hit", "death"],
+                  "boss": ["spawn", "walk", "hit", "death"]}
+ENGINE_ANIMS = {"spawn", "idle", "walk", "run", "jump", "hit", "block", "stagger", "death"}
+REQUIRED_SOUNDS = {"minion": ["hurt", "death"], "mini_boss": ["spawn", "hurt", "death", "enrage"],
+                   "boss": ["spawn", "hurt", "death", "enrage"]}
+BUILTIN_ACTIONS = {"target_healer", "guard_break"}
+WAVE_UNTIL = {"phase_end", "boss_death"}
+# vanilla mobs a summon or a wave may name without a spec of their own
+VANILLA_MOBS = {
+    "zombie", "husk", "drowned", "skeleton", "stray", "bogged", "wither_skeleton", "spider", "cave_spider",
+    "creeper", "slime", "magma_cube", "silverfish", "endermite", "witch", "vex", "pillager", "vindicator",
+    "evoker", "ravager", "blaze", "ghast", "piglin", "piglin_brute", "hoglin", "zoglin", "zombified_piglin",
+    "phantom", "guardian", "breeze", "creaking", "enderman", "wolf", "bee", "iron_golem", "baby_zombie",
+    "chicken_jockey",
+}
+
+
+class Report:
+    def __init__(self):
+        self.rows: list[tuple[str, str, str, str]] = []
+
+    def add(self, group, check, ok, detail=""):
+        status = ok if isinstance(ok, str) else ("PASS" if ok else "FAIL")
+        self.rows.append((group, check, status, str(detail)))
+        return status == "PASS"
+
+    def count(self, status):
+        return sum(1 for r in self.rows if r[2] == status)
+
+    @property
+    def failed(self):
+        return self.count("FAIL") > 0
+
+
+def is_int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def is_num(v):
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def sound_names(node):
+    return [v for v in (node or {}).values() if isinstance(v, str)]
+
+
+# ---------------------------------------------------------------------------------------- spec
+def check_spec(spec, boss_dir: Path, rep: Report):
+    g = "format"
+    kind = spec.get("kind")
+    if not rep.add(g, "kind is minion | mini_boss | boss", kind in KINDS, kind):
+        return
+    boss = kind != "minion"
+    required = ["id", "kind", "dungeon", "name", "lore", "size", "stats", "moves", "animations", "sounds"]
+    if boss:
+        required += ["phases", "reactions", "defences"]
+    if kind == "mini_boss":
+        required += ["rune", "teaches"]
+    missing = [k for k in required if k not in spec]
+    rep.add(g, "required keys", not missing, "missing: " + ", ".join(missing) if missing else f"{len(required)} keys")
+    if missing:
+        return
+    rep.add(g, "id = folder name", spec["id"] == boss_dir.name, f"{spec['id']} / {boss_dir.name}")
+    rep.add(g, "dungeon = parent folder", spec["dungeon"] == boss_dir.parent.name,
+            f"{spec['dungeon']} / {boss_dir.parent.name}")
+    name = spec["name"]
+    rep.add(g, "name has en and fr", isinstance(name, dict) and all(name.get(k) for k in ("en", "fr")), name)
+    if kind == "mini_boss":
+        rep.add(g, "rune is one of " + "|".join(RUNES), spec["rune"] in RUNES, spec["rune"])
+    else:
+        rep.add(g, "no rune (mini-bosses only)", "rune" not in spec, spec.get("rune", "none"))
+    size = spec["size"]
+    size_ok = isinstance(size, dict) and all(is_num(size.get(k)) and size[k] > 0 for k in ("width", "height"))
+    on_grid = size_ok and all(float(size[k] * PX_PER_BLOCK).is_integer() for k in ("width", "height"))
+    rep.add(g, "size: width and height > 0, on the 1/16 grid", size_ok and on_grid,
+            f"{size.get('width')} x {size.get('height')} blocks" if size_ok else size)
+    stats = spec["stats"]
+    need = ["hp", "armor", "damage_cap_per_hit"] + (["enrage_seconds"] if boss else [])
+    bad = [k for k in need if not is_num(stats.get(k)) or (k != "armor" and stats[k] <= 0)]
+    rep.add(g, "stats: " + ", ".join(need), not bad, "bad: " + ", ".join(bad) if bad else
+            ", ".join(f"{k} {stats[k]}" for k in need))
+
+    anims = spec["animations"]
+    moves = spec["moves"] or {}
+    rep.add("names", "animations: a list, each name once", isinstance(anims, list) and len(anims) == len(set(anims)),
+            f"{len(anims)} animations")
+    anim_set = set(anims)
+    used_anims: set[str] = set()
+
+    def need_anim(where, name):
+        used_anims.add(name)
+        if name not in anim_set:
+            rep.add("names", f"{where}: animation '{name}' is declared", False, "not in animations")
+
+    # ---- moves
+    g = "moves"
+    all_sounds: list[tuple[str, str]] = [("sounds." + k, v) for k, v in (spec["sounds"] or {}).items()]
+    short, punish = [], 0
+    for mid, mv in moves.items():
+        mk = mv.get("kind", "attack")
+        if mk not in MOVE_KINDS:
+            rep.add(g, f"{mid}: kind", False, mk)
+            continue
+        if not mv.get("animation"):
+            rep.add(g, f"{mid}: has an animation", False)
+        else:
+            need_anim(mid, mv["animation"])
+        snd = mv.get("sounds") or {}
+        all_sounds += [(f"{mid}.sounds.{k}", v) for k, v in snd.items()]
+        tell = bool(snd.get("windup")) and bool((mv.get("particles") or {}).get("windup")) and bool(mv.get("animation"))
+        wind = mv.get("windup_ticks")
+        if not is_int(wind) or wind <= 0:
+            rep.add(g, f"{mid}: windup_ticks", False, wind)
+            continue
+        if mk == "attack":
+            keys = ["active_ticks", "recovery_ticks", "cooldown_ticks"]
+            bad = [k for k in keys if not is_int(mv.get(k)) or mv[k] <= 0]
+            ok = not bad and isinstance(mv.get("shape"), dict) and "type" in mv["shape"] and is_num(mv.get("damage"))
+            total = wind + (mv.get("active_ticks") or 0) + (mv.get("recovery_ticks") or 0)
+            rep.add(g, f"{mid}: attack timings, shape, damage", ok,
+                    f"{wind} + {mv.get('active_ticks')} + {mv.get('recovery_ticks')} = {total} ticks "
+                    f"({total / 20:g} s), cooldown {mv.get('cooldown_ticks')}" if ok else f"bad: {bad or 'shape/damage'}")
+            if wind < MIN_WINDUP:
+                short.append(f"{mid} {wind}")
+            punish = max(punish, mv.get("recovery_ticks") or 0)
+            zone = mv.get("zone")
+            if zone is not None:
+                rep.add(g, f"{mid}: zone has duration, damage, every_ticks, max_alive",
+                        all(is_num(zone.get(k)) and zone[k] > 0 for k in ("duration_ticks", "damage", "every_ticks", "max_alive")),
+                        zone)
+        rep.add(g, f"{mid}: tell = pose + wind-up sound + wind-up particles", tell,
+                f"{mv.get('animation')}, {snd.get('windup')}, {(mv.get('particles') or {}).get('windup')}")
+    rep.add(g, f"every attack wind-up >= {MIN_WINDUP} ticks", not short, "too short: " + ", ".join(short) if short else
+            "shortest %s" % min((m.get("windup_ticks", 0) for m in moves.values()), default=0))
+    if boss:
+        rep.add(g, f"a punish window: one recovery >= {MIN_PUNISH} ticks", punish >= MIN_PUNISH, f"longest {punish}")
+
+    # ---- phases
+    phase_ids: list[str] = []
+    used_moves: set[str] = set()
+    musics: list[str] = []
+    if boss:
+        g = "phases"
+        phases = spec["phases"] or []
+        phase_ids = [p.get("id") for p in phases]
+        hps = [p.get("hp_below") for p in phases]
+        rep.add(g, "at least 2 phases, ids unique", len(phases) >= 2 and len(set(phase_ids)) == len(phase_ids),
+                ", ".join(map(str, phase_ids)))
+        ordered = all(is_num(h) for h in hps) and hps and hps[0] == 1.0 and all(a > b > 0 for a, b in zip(hps, hps[1:]))
+        rep.add(g, "ordered by hp_below, first = 1.0", bool(ordered), " > ".join(map(str, hps)))
+        for i, p in enumerate(phases):
+            pid = p.get("id")
+            unknown = [m for m in p.get("moves") or [] if m not in moves]
+            rep.add(g, f"{pid}: moves exist", bool(p.get("moves")) and not unknown,
+                    "unknown: " + ", ".join(unknown) if unknown else ", ".join(p.get("moves") or []))
+            used_moves.update(p.get("moves") or [])
+            if p.get("idle"):
+                need_anim(pid + ".idle", p["idle"])
+            else:
+                rep.add(g, f"{pid}: has an idle animation", False)
+            if i > 0:
+                ok = bool(p.get("enter")) and is_int(p.get("enter_ticks")) and p["enter_ticks"] > 0
+                rep.add(g, f"{pid}: entry animation + enter_ticks", ok, f"{p.get('enter')}, {p.get('enter_ticks')} ticks")
+                if p.get("enter"):
+                    need_anim(pid + ".enter", p["enter"])
+                prev = phases[i - 1]
+                changed = set(p.get("moves") or []) != set(prev.get("moves") or []) or p.get("speed", 1) != prev.get("speed", 1)
+                rep.add(g, f"{pid}: changes the move set or the rhythm", changed,
+                        "speed %s" % p.get("speed", 1))
+            if p.get("music"):
+                musics.append(p["music"])
+            for w in p.get("waves") or []:
+                mobs = w.get("mobs") or {}
+                ok = is_int(w.get("max_alive")) and w["max_alive"] > 0 and is_int(w.get("every_ticks")) \
+                    and w["every_ticks"] > 0 and w.get("until") in WAVE_UNTIL and bool(mobs)
+                rep.add("mechanics", f"{pid} wave: max_alive, every_ticks, until", ok,
+                        f"max_alive {w.get('max_alive')}, every {w.get('every_ticks')}, until {w.get('until')}")
+                per_spawn = sum(v for v in mobs.values() if is_int(v))
+                rep.add("mechanics", f"{pid} wave: one spawn fits in max_alive", ok and per_spawn <= w["max_alive"],
+                        f"{per_spawn} per spawn")
+                for mob in mobs:
+                    check_mob(mob, boss_dir, rep, f"{pid} wave")
+        rep.add(g, "every move is used by a phase", set(moves) <= used_moves,
+                "unused: " + ", ".join(sorted(set(moves) - used_moves)) if set(moves) - used_moves else f"{len(moves)} moves")
+
+    # ---- mechanics (§4.5)
+    g = "mechanics"
+    for mid, mv in moves.items():
+        mk = mv.get("kind", "attack")
+        if mk == "summon":
+            check_mob(mv.get("minion"), boss_dir, rep, mid)
+            cnt = mv.get("count") or {}
+            ok = all(is_int(cnt.get(k)) for k in ("base", "per_extra_player", "max")) and \
+                1 <= cnt["base"] <= cnt["max"] <= PARTY_MAX
+            at8 = min(cnt["max"], cnt["base"] + cnt["per_extra_player"] * (PARTY_MAX - 2)) if ok else "?"
+            rep.add(g, f"{mid}: count base/per_extra_player/max, max <= {PARTY_MAX}", ok,
+                    f"{cnt.get('base')} + {cnt.get('per_extra_player')} per player above 2, max {cnt.get('max')} "
+                    f"(2 players: {cnt.get('base')}, 8 players: {at8})")
+            rep.add(g, f"{mid}: uses_per_phase set", is_int(mv.get("uses_per_phase")), mv.get("uses_per_phase"))
+            if mv.get("protect"):
+                sh = mv.get("shield") or {}
+                rep.add(g, f"{mid}: protect has a shield animation, tethers and an immune sound",
+                        bool(sh.get("animation")) and bool(sh.get("immune_sound")) and bool(sh.get("tether_particles")),
+                        f"{sh.get('animation')}, {sh.get('tether_particles')}, {sh.get('immune_sound')}")
+                for k in ("animation", "break_animation"):
+                    if sh.get(k):
+                        need_anim(f"{mid}.shield.{k}", sh[k])
+                all_sounds += [(f"{mid}.shield.{k}", sh[k]) for k in ("immune_sound", "break_sound") if sh.get(k)]
+                ws = mv.get("while_shielded") or []
+                rep.add(g, f"{mid}: keeps attacking while shielded (moves exist)", bool(ws) and all(m in moves for m in ws),
+                        ", ".join(ws))
+        elif mk == "heal":
+            it = mv.get("interrupt") or {}
+            ok = is_num(it.get("damage")) and 0 < it["damage"] < 1 and is_num(it.get("per_extra_player")) \
+                and it["per_extra_player"] > 0 and is_int(it.get("stagger_ticks")) and it["stagger_ticks"] > 0
+            at8 = it["damage"] + it["per_extra_player"] * (PARTY_MAX - 2) if ok else 0
+            rep.add(g, f"{mid}: interrupt damage, per_extra_player, stagger_ticks", ok,
+                    f"{it.get('damage', 0) * 100:g} % + {it.get('per_extra_player', 0) * 100:g} % per player above 2 "
+                    f"(8 players: {at8 * 100:g} %), stagger {it.get('stagger_ticks')} ticks")
+            rep.add(g, f"{mid}: cap = phase", mv.get("cap") == "phase", mv.get("cap"))
+            ch, hps_ = mv.get("channel_ticks"), mv.get("heal_per_second")
+            ok = is_int(ch) and ch > 0 and is_num(hps_) and 0 < hps_ < 1 and is_int(mv.get("uses_per_phase"))
+            rep.add(g, f"{mid}: channel_ticks, heal_per_second, uses_per_phase", ok,
+                    f"{ch} ticks x {hps_} = {ch / 20 * hps_ * 100:g} % of max HP per channel, "
+                    f"{mv.get('uses_per_phase')} per phase" if ok else "")
+            if mv.get("interrupt_animation"):
+                need_anim(f"{mid}.interrupt_animation", mv["interrupt_animation"])
+            snd = mv.get("sounds") or {}
+            rep.add(g, f"{mid}: loop and interrupt sounds", bool(snd.get("loop")) and bool(snd.get("interrupt")),
+                    f"{snd.get('loop')}, {snd.get('interrupt')}")
+            goto = it.get("goto_phase")
+            if goto is not None:
+                users = [i for i, p in enumerate(spec.get("phases") or []) if mid in (p.get("moves") or [])]
+                later = goto in phase_ids and users and phase_ids.index(goto) > max(users)
+                rep.add(g, f"{mid}: goto_phase names a later phase", bool(later),
+                        f"{goto} (used in {', '.join(phase_ids[i] for i in users)})")
+    if boss:
+        distinct = sorted(set(musics))
+        budget = 1 if kind == "mini_boss" else len(spec["phases"])
+        rep.add(g, f"music within the budget ({kind}: {budget} track{'s' if budget > 1 else ''})",
+                len(distinct) <= budget, ", ".join(distinct) or "none")
+        all_sounds += [("music", m) for m in distinct]
+    else:
+        rep.add(g, "minion: no music, no phases", "phases" not in spec and "music" not in spec)
+
+    # ---- reactions, defences
+    if boss:
+        g = "reactions"
+        reactions = spec["reactions"] or []
+        bad = [r for r in reactions if not r.get("when") or (r.get("do") not in moves and r.get("do") not in BUILTIN_ACTIONS)
+               or ("phase" in r and r["phase"] not in phase_ids)]
+        rep.add(g, "each reaction: when + do (a move or a built-in), known phase", not bad,
+                "bad: %s" % bad if bad else f"{len(reactions)} reactions")
+        whens = {r.get("when") for r in reactions}
+        rep.add(g, "reacts to distance, healers and groups (§4.2)",
+                {"players_far", "healed_nearby", "players_grouped"} <= whens, ", ".join(sorted(map(str, whens))))
+        for d in spec["defences"] or []:
+            rep.add(g, f"defence {d.get('id')}: id + animation", bool(d.get("id")) and bool(d.get("animation")))
+            if d.get("animation"):
+                need_anim(f"defence {d.get('id')}", d["animation"])
+
+    # ---- names
+    g = "names"
+    for a in REQUIRED_ANIMS[kind]:
+        if a not in anim_set:
+            rep.add(g, f"required animation '{a}'", False, "missing")
+    rep.add(g, "required animations (" + ", ".join(REQUIRED_ANIMS[kind]) + ")",
+            all(a in anim_set for a in REQUIRED_ANIMS[kind]))
+    extra = sorted(a for a in anim_set - used_anims if a not in ENGINE_ANIMS)
+    rep.add(g, "no animation without a user (move, phase, shield or engine name)", not extra,
+            "unused: " + ", ".join(extra) if extra else f"{len(anim_set)} declared, {len(used_anims)} named by moves/phases")
+    names = [n for _, n in all_sounds]
+    dup = sorted({n for n in names if names.count(n) > 1})
+    rep.add(g, "every sound name is written once", not dup, "twice: " + ", ".join(dup) if dup else f"{len(names)} sounds")
+    need_s = [s for s in REQUIRED_SOUNDS[kind] if s not in (spec["sounds"] or {})]
+    for p in (spec.get("phases") or [])[1:]:
+        if p.get("enter") and p["enter"] not in (spec["sounds"] or {}):
+            need_s.append(p["enter"])
+    rep.add(g, "base sounds (" + ", ".join(REQUIRED_SOUNDS[kind]) + ", one per phase entry)", not need_s,
+            "missing: " + ", ".join(need_s) if need_s else "")
+    clash = sorted(set(names) & anim_set)
+    rep.add(g, "no sound shares a name with an animation", not clash, ", ".join(clash))
+
+
+def check_mob(mob, boss_dir: Path, rep: Report, where: str):
+    spec_file = boss_dir.parent / str(mob) / "boss.yml"
+    if spec_file.exists():
+        try:
+            k = load_yaml(spec_file).get("kind")
+        except Exception as e:  # noqa: BLE001
+            k = f"unreadable ({e})"
+        rep.add("mechanics", f"{where}: '{mob}' has its own kind: minion spec", k == "minion", f"{spec_file.parent.name}/boss.yml kind {k}")
+    else:
+        rep.add("mechanics", f"{where}: '{mob}' is vanilla or has a minion spec", mob in VANILLA_MOBS,
+                "vanilla" if mob in VANILLA_MOBS else "no spec folder, not a known vanilla mob")
+
+
+# ---------------------------------------------------------------------------------------- concept
+def check_concept(spec, boss_dir: Path, rep: Report):
+    from PIL import Image
+
+    g = "concept"
+    cdir = boss_dir / "concept"
+    files = ["front.png", "side.png", "back.png", "palette.png", "front_1x.png", "side_1x.png", "back_1x.png",
+             "concept.yml"]
+    missing = [f for f in files if not (cdir / f).exists()]
+    if not rep.add(g, "concept sheet files", not missing, "missing: " + ", ".join(missing) if missing else ", ".join(files[:4])):
+        return
+    style = boss_dir.parent / "style.md"
+    palette = load_palette(style) if style.exists() else {}
+    if not rep.add(g, "style.md palette (8-16 colours)", 8 <= len(palette) <= 16, f"{len(palette)} colours"):
+        return
+    allowed = set(palette.values())
+    outside = set()
+    for v in ("front", "side", "back"):
+        img = Image.open(cdir / f"{v}_1x.png").convert("RGBA")
+        outside |= {c[:3] for _, c in img.getcolors(1 << 20) if c[3] > 0 and c[:3] not in allowed}
+    rep.add(g, "pixel art uses the palette only", not outside,
+            "outside: " + ", ".join(hexa(c) for c in sorted(outside)) if outside else "0 colours outside style.md")
+    parts = load_yaml(cdir / "concept.yml")["parts"]
+    cubes = [p for p in parts if not p.get("paint")]
+    kind = spec.get("kind")
+    budget = CUBE_BUDGET.get(kind, 0)
+    rep.add(g, f"cubes <= budget ({budget})", len(cubes) <= budget, f"{len(cubes)} cubes, {len(parts) - len(cubes)} painted details")
+    used = {p["bone"] for p in parts}
+    extras = spec.get("bones") or []
+    rep.add(g, "extra bones: each declared once, none is a fixed name",
+            len(extras) == len(set(extras)) and not set(extras) & set(FIXED_BONES), f"{len(extras)} extras")
+    unknown = sorted(used - set(FIXED_BONES) - set(extras))
+    rep.add(g, "every bone drawn is a fixed name or declared in boss.yml > bones", not unknown,
+            "undeclared: " + ", ".join(unknown) if unknown else f"{len(used)} bones drawn")
+    idle = sorted(set(extras) - used)
+    rep.add(g, "every declared extra bone is drawn", not idle, "not drawn: " + ", ".join(idle) if idle else "")
+    rep.add(g, "body and head are drawn", {"body", "head"} <= used)
+    size = spec.get("size") or {}
+    if all(is_num(size.get(k)) for k in ("width", "height")):
+        hw, hh = size["width"] * PX_PER_BLOCK / 2, size["height"] * PX_PER_BLOCK
+        top = max(p["from"][1] + p["size"][1] for p in cubes)
+        reach = max(max(abs(p["from"][a]), abs(p["from"][a] + p["size"][a])) for p in cubes for a in (0, 2))
+        core = [p for p in cubes if p["bone"] in ("body", "hip", "chest", "neck") or p["bone"].startswith(("leg", "shin", "foot"))]
+        core_reach = max((max(abs(p["from"][a]), abs(p["from"][a] + p["size"][a])) for p in core for a in (0, 2)), default=0)
+        rep.add(g, "trunk and legs stay inside the hitbox width", core_reach <= hw,
+                f"reach {core_reach} px, half hitbox {hw:g} px")
+        rep.add(g, "hitbox height between 75 % and 100 % of the drawn height", 0.75 * top <= hh <= top,
+                f"hitbox {hh:g} px, drawn {top} px ({top / PX_PER_BLOCK:g} blocks), widest reach {reach} px")
+
+
+def not_yet(rep: Report, step: str, asked: bool):
+    what = {"model": "<boss>.bbmodel (bones, cube budget, grid, texture, palette, hitbox)",
+            "animation": "animations in the model (one per spec name, length = windup + active + recovery)",
+            "sound": "sounds/*.ogg (one per spec name, mono/stereo, loudness, LICENSES.md)"}[step]
+    rep.add(step, what, "FAIL" if asked else "NOT YET",
+            "validator part not written yet (written by the agent of this step, skill §5)")
+
+
+def render(rep: Report, boss_dir: Path, step: str, iteration, spec) -> str:
+    verdict = "FAIL" if rep.failed else "PASS"
+    try:
+        shown = boss_dir.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        shown = boss_dir.as_posix()
+    out = [f"# Validator report: {spec.get('id', boss_dir.name)}, step `{step}`"
+           + (f", iteration {iteration}" if iteration else ""), "",
+           f"- Date: {datetime.date.today().isoformat()}",
+           f"- Command: `python bosses/_tools/validate.py {shown} --step {step}`",
+           f"- **Verdict: {verdict}** ({rep.count('PASS')} PASS, {rep.count('FAIL')} FAIL, "
+           f"{rep.count('NOT YET')} not yet)", "",
+           "| Group | Check | Result | Numbers |", "|---|---|---|---|"]
+    for grp, check, status, detail in rep.rows:
+        out.append("| %s | %s | %s | %s |" % (grp, check.replace("|", "/"), "**FAIL**" if status == "FAIL" else status,
+                                               detail.replace("|", "/").replace("\n", " ")))
+    return "\n".join(out) + "\n"
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Boss pipeline validator")
+    ap.add_argument("boss_dir", type=Path)
+    ap.add_argument("--step", choices=STEPS, required=True)
+    ap.add_argument("--report", type=Path, help="also write the markdown report to this file")
+    ap.add_argument("--iteration", type=int, default=0)
+    args = ap.parse_args()
+    boss_dir = args.boss_dir.resolve()
+    rep = Report()
+    try:
+        spec = load_yaml(boss_dir / "boss.yml")
+    except Exception as e:  # noqa: BLE001  (missing file, bad yaml, key written twice)
+        print(f"cannot read {boss_dir / 'boss.yml'}: {e}", file=sys.stderr)
+        return 2
+    rep.add("format", "boss.yml parses, no key written twice", isinstance(spec, dict))
+    if isinstance(spec, dict):
+        try:
+            check_spec(spec, boss_dir, rep)
+            check_concept(spec, boss_dir, rep)
+        except Exception as e:  # noqa: BLE001  a malformed spec must give a FAIL row, not a traceback
+            rep.add("format", "spec can be checked to the end", False, f"{type(e).__name__}: {e}")
+    for step in STEPS[1:]:
+        if STEPS.index(step) <= STEPS.index(args.step):
+            not_yet(rep, step, asked=True)
+        else:
+            not_yet(rep, step, asked=False)
+    text = render(rep, boss_dir, args.step, args.iteration, spec if isinstance(spec, dict) else {})
+    sys.stdout.reconfigure(encoding="utf-8")
+    print(text)
+    if args.report:
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(text, encoding="utf-8")
+    return 1 if rep.failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

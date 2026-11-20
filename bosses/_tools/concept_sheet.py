@@ -192,7 +192,7 @@ def main() -> int:
     reach = int(max(reach, hitbox_px[0] / 2)) + MARGIN
     top_y = int(max(max(p["from"][1] + p["size"][1] for p in parts), hitbox_px[1])) + MARGIN
     bounds = (-reach, reach, top_y)
-    scale = args.scale or max(4, min(24, 460 // top_y))
+    scale = args.scale or max(4, min(24, 620 // top_y))
 
     out = boss_dir / "concept"
     cubes = sum(1 for p in parts if not p.get("paint"))

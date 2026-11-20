@@ -1,16 +1,21 @@
-# Dark Mushroom: minion spec (boss pipeline step 1, iteration 1, 2026-11-20). Status: proposed.
+# Dark Mushroom: minion spec (boss pipeline step 1, iteration 2, 2026-11-20). Status: proposed.
 # Summoned by fungal_witch (protector in call_brood, side wave in p3). Format: plan §4.1, minions §4.5.
 # All times in ticks (20 = 1 s).
+# Iteration 2 (user): a little mushroom creature, not humanoid: cap = head, big eyes, toothed mouth
+# under the cap, four stubby legs.
 id: dark_mushroom
 kind: minion
 dungeon: dark_forest
 name: {en: "Dark Mushroom", fr: "Champignon noir"}
 lore: >
-  A cap that learned to bite. The witch's brood rises from the rot wherever she plants her staff:
-  its cap is its upper jaw, and it opens like a lid.
+  A cap that learned to bite. The witch's brood pushes out of the rot wherever her spores fall:
+  two mad eyes on a dark cap, a mouth far too wide under it, and four stubby legs that never stop.
 
-size: {width: 0.875, height: 0.875}        # hitbox in blocks (14 x 14 px)
-bones: [jaw, leg_fl, leg_fr, leg_bl, leg_br]   # extras; `head` is the cap (upper jaw), `jaw` the teeth row on the stem
+# Hitbox in blocks (14 x 16 px): stem, legs and cap height. The cap (16 px wide) and the sprout reach outside.
+size: {width: 0.875, height: 1.0}
+# Extra bones, beside root, body (the stem) and head (the cap, with the eyes and upper teeth).
+# No arms: it is a four-legged mushroom. `jaw` drops to open the mouth, `sprout` wobbles.
+bones: [jaw, leg_fl, leg_fr, leg_bl, leg_br, sprout]
 stats:
   hp: 24
   armor: 0
@@ -20,9 +25,9 @@ stats:
 moves:
   bite:
     kind: attack
-    windup_ticks: 10                       # the cap swings wide open, the teeth glow
-    active_ticks: 3
-    recovery_ticks: 14                     # cap shut, it shakes itself
+    windup_ticks: 10                       # it rears on its back legs, the cap tips back, the jaw drops wide, the teeth glow
+    active_ticks: 3                        # it drops forward and snaps
+    recovery_ticks: 14                     # mouth shut, it shakes its cap
     cooldown_ticks: 30
     shape: {type: cone, range: 1.8, angle: 80}
     damage: 4
