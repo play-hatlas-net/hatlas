@@ -7,7 +7,7 @@ description: Builds a Hatlas dungeon boss or mini-boss end to end: references + 
 
 > **Status: process defined 2026-11-18 (round 22, `docs/cities-and-dungeons.md` §4.1–4.4), tools not
 > built yet.** The scripts named below (`bosses/_tools/`) are **to be written** during the pilot (the
-> **Fungal Witch**, `dark_forest`) by the agent of the step that first needs them, then reused. Until
+> **Fungal Root**, `dark_forest`) by the agent of the step that first needs them, then reused. Until
 > then, follow this file as the plan.
 
 Every boss is **made from files, not from chat**. Each step reads the files of the previous steps and
@@ -179,7 +179,7 @@ blocks the gate.
 - **Gates are the user's**: never skip ★ to save time. **Step 1 never starts before the user's refs are
   in `refs/`** (unless the user says to start without them).
 - **At most 3 fix iterations per step**, then stop and ask with what is still wrong.
-- **One boss at a time, one dungeon first** (pilot: Fungal Witch), then scale to 3 mini-bosses + 1 boss
+- **One boss at a time, one dungeon first** (pilot: Fungal Root), then scale to 3 mini-bosses + 1 boss
   per dungeon type.
 - No AI 3D-mesh generators (cubes only). No image AI for the concept sheet or textures (palette-exact
   pixel art by script). AI only for sounds (OQ 103).

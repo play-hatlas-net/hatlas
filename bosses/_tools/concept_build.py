@@ -12,8 +12,8 @@ Usage (from a design.py):
     c.note("legs")
     c.sym("leg_{s}", 2, 25, -1, 3, 6, 3, "bark")      # right box + its mirror, {s} = r / l
     c.box("head", -16, 58, -13, 32, 3, 24, "cap_deep")
-    c.fz("body", 1, 48, 2, 4, -4, "eye_amber")        # decal on the plane z = -4
-    c.write(Path(__file__).with_name("concept.yml"), "Fungal Witch")
+    c.fz("body", 1, 48, 2, 4, -4, "cyan_glow")        # decal on the plane z = -4
+    c.write(Path(__file__).with_name("concept.yml"), "Fungal Root")
 """
 from __future__ import annotations
 

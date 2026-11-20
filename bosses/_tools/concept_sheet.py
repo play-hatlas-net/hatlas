@@ -11,8 +11,8 @@ Writes  <boss>/concept/front.png, side.png, back.png   views with the dashed hit
 
 concept.yml:
     parts:
-      - {bone: head, from: [x, y, z], size: [w, h, d], color: gill_pale}                 # a cube
-      - {bone: head, from: [x, y, z], size: [2, 2, 0], color: eye_amber, paint: true}    # texture detail
+      - {bone: head, from: [x, y, z], size: [w, h, d], color: stem_pale}                 # a cube
+      - {bone: head, from: [x, y, z], size: [2, 2, 0], color: cyan_glow, paint: true}    # texture detail
 Units are pixels (1/16 block). y is up from the ground, the character faces -z, its right side is +x
 (Blockbench: a model faces north). `paint: true` parts are details painted on the texture: they are
 drawn but not counted as cubes, and one of their sizes may be 0 (a flat decal on a face).
@@ -33,10 +33,11 @@ from common import CUBE_BUDGET, PX_PER_BLOCK, hexa, load_palette, load_yaml  # n
 
 BG = (35, 35, 43)
 PANEL = (46, 46, 56)
+PANEL_FOR_DARK = (98, 100, 112)  # behind a mostly dark character, so its outline still reads on the sheet
 TEXT = (232, 232, 232)
 DIM = (150, 150, 162)
 HITBOX = (255, 90, 90)
-GROUND = (110, 110, 122)
+GROUND = (190, 190, 200)
 MARGIN = 3  # model pixels around the drawing
 
 # view -> (screen axis, sign), (depth axis, sign): a bigger depth value is nearer to the viewer
@@ -96,6 +97,18 @@ def dashed_rect(draw, box, color, dash=6, width=2):
                       fill=color, width=width)
 
 
+def luminance(rgb):
+    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]
+
+
+def panel_colour(raw):
+    """Panel behind a view: lighter when most of the drawn pixels are dark (a night palette)."""
+    drawn = [(n, c) for n, c in raw.getcolors(1 << 20) if c[3] > 0]
+    total = sum(n for n, _ in drawn) or 1
+    dark = sum(n for n, c in drawn if luminance(c) < 60)
+    return PANEL_FOR_DARK if dark * 2 > total else PANEL
+
+
 def annotate(raw, parts, view, bounds, hitbox_px, scale, title):
     """Upscaled view with ground line, dashed hitbox and bone names on both sides."""
     u_min, u_max, y_max = bounds
@@ -103,7 +116,7 @@ def annotate(raw, parts, view, bounds, hitbox_px, scale, title):
     w, h = raw.width * scale, raw.height * scale
     img = Image.new("RGB", (w + 2 * label_w, h + top + bottom), BG)
     draw = ImageDraw.Draw(img)
-    draw.rectangle((label_w, top, label_w + w, top + h), fill=PANEL)
+    draw.rectangle((label_w, top, label_w + w, top + h), fill=panel_colour(raw))
     img.paste(raw.resize((w, h), Image.NEAREST), (label_w, top), raw.resize((w, h), Image.NEAREST))
     f, fs = font(15), font(12)
 

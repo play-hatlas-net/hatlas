@@ -1,0 +1,187 @@
+# Fungal Root: spec (boss pipeline step 1, iteration 4, 2026-11-20). Status: proposed.
+# Format: docs/cities-and-dungeons.md §4.1, rules §4.2, phase mechanics §4.5.
+# All times in ticks (20 = 1 s). Shares (hp_below, heal, interrupt) are shares of max HP.
+# Every animation and sound name is written once here; later steps reuse them exactly.
+# Iteration 3 (user): no humanoid part at all. A root mass on four stilt root legs, a trunk leaning
+# forward under its cap, static eyes in the trunk, nothing held. Bioluminescent blue palette.
+# Iteration 4 (user): both attacking roots on the same side, both ending in jaws (freaky: uneven fangs,
+# lavender gums, split bark, boils, glowing drool); 5 blocks tall; hitbox width 1.75 approved.
+id: fungal_root
+kind: mini_boss
+rune: nature
+dungeon: dark_forest
+name: {en: "Fungal Root", fr: "Racine fongique"}
+lore: >
+  Nobody planted it. The oldest mushroom of the pale garden pulled its roots out of the rot one wet
+  night and walked away on them: four stilt roots around a knot of wood, and a cap so heavy that the
+  trunk bends forward under it. It has no face. Knot-holes in its bark glow cyan and never blink. Two
+  roots grew out of the same side of it and both split open into mouths: bark peeled back over lavender
+  gums, too many teeth and none the same length, strings of glowing drool. The taller one keeps a pod
+  of spores alight in its throat. When it is hurt it draws the lavender sap of the sac under its cap.
+  It does not chase intruders. It lets the forest breathe on them.
+teaches: >
+  Target priority: know what to hit now. The Dark Mushrooms while it is shielded, the Fungal Root
+  itself while it drinks (the lavender light), and never the side waves.
+
+# Hitbox in blocks (28 x 72 px): the four legs, the trunk and most of the cap. The cap (34 px wide,
+# hanging 26 px in front), the two jaw roots (both on its right, reaching 29 px out) and the tallest
+# sprout (top at 80 px = 5 blocks) reach outside it. Wider than a biped's because the four feet stand
+# at its corners (width approved by the user, iteration 4).
+size: {width: 1.75, height: 4.5}
+# Extra bones. `head` is the cap, `body` the lower trunk, `chest` the upper trunk (the eyes are painted
+# on it: static, no eye bone), `hip` the root mass. Four legs: leg_* (thigh), shin_* (knee knot and
+# shin), foot_*; f = front, b = back. The humanoid fixed names arm_l, arm_r, leg_l, leg_r are NOT used.
+# Both attacking roots grow from the RIGHT of the root mass. The lash root (front): lash_base,
+# lash_mid, then `maw` (upper jaw) and `jaw` (long lower jaw that snaps). The spit root (back, the old
+# staff): spit_base, spit_root (the tall shaft), then its tip split into spit_jaw_l and spit_jaw_r
+# (two halves that open sideways), with spit_pod (the spore pod) inside the gape. `bulb` is the sap sac
+# and its vein, under the cap on the left.
+bones: [hip, chest, neck, cap_sprouts, tendrils_f, tendrils_b, tendrils_l, tendrils_r,
+        leg_fl, leg_fr, leg_bl, leg_br, shin_fl, shin_fr, shin_bl, shin_br,
+        foot_fl, foot_fr, foot_bl, foot_br,
+        lash_base, lash_mid, maw, jaw, spit_base, spit_root, spit_jaw_l, spit_jaw_r, spit_pod, bulb]
+stats:
+  hp: 600
+  armor: 6
+  damage_cap_per_hit: 12
+  enrage_seconds: 300
+  walk_speed: 0.9                          # blocks per second; slow stilt walk on four legs, both jaws swaying and drooling; tree_step is its mobility
+requires:
+  anchors: {tree: {min: 4, max: 8}}        # tree positions set per fight zone (admin setup), used by tree_step
+  # no clearance value: dungeon combat areas have more than 50 blocks of free height (user, iteration 3)
+
+phases:
+  - id: p1                                 # "the glade": learn the clouds and the tree steps
+    hp_below: 1.0
+    moves: [maw_lash, spore_cloud, tree_step]
+    idle: idle_calm
+    music: fungal_root_music
+  - id: p2                                 # "the brood": protectors, then the sap
+    hp_below: 0.7
+    enter: phase2_enter                    # the four legs stomp one after the other, both jaws gape and scream at the ground, the cap shakes: spores fall
+    enter_ticks: 40
+    moves: [maw_lash, spore_cloud, tree_step, call_brood, brew_mend]
+    idle: idle_angry
+    music: fungal_root_music
+  - id: p3                                 # "the rot": faster, clouds on everyone, side waves
+    hp_below: 0.4
+    enter: phase3_enter                    # it rears on its back legs, the cap tips up, every tendril stands out, both jaws gape wide; then it crashes back down
+    enter_ticks: 40
+    moves: [maw_lash, spore_cloud, spore_rain, tree_step]
+    idle: idle_angry
+    speed: 1.25                            # cooldowns and walk speed; wind-ups are NOT shortened
+    music: fungal_root_music
+    waves:                                 # optional adds: no XP, no drops, never shield it (§4.5)
+      - {mobs: {dark_mushroom: 2, cave_spider: 1}, every_ticks: 300, max_alive: 5, until: boss_death}
+
+moves:
+  maw_lash:                                # melee answer to players standing under it
+    kind: attack
+    windup_ticks: 14                       # the lash root rears straight up above the cap, its jaw gapes, fangs glow, drool falls; the spit jaw opens beside it; the front legs brace
+    active_ticks: 4                        # the lash root whips forward and down and bites; the spit jaw snaps shut at the same instant (one hit, two snaps)
+    recovery_ticks: 20                     # the lash jaw has bitten into the ground and tugs free: punish window
+    cooldown_ticks: 40
+    shape: {type: cone, range: 4.0, angle: 100}
+    damage: 8
+    knockback: 0.6
+    animation: attack_lash
+    sounds: {windup: root_lash_windup, hit: root_lash_hit}
+    particles: {windup: crit, hit: sweep_attack}
+
+  spore_cloud:                             # its main attack: a poison zone thrown on a player
+    kind: attack
+    windup_ticks: 20                       # the spit root leans back and its two halves peel wide open, the pod in its throat flares brighter and brighter; the trunk straightens (cap tilts back); the spore ring thickens on the ground
+    active_ticks: 2                        # the spit root whips forward and spits the cloud
+    recovery_ticks: 16                     # the halves close slowly, drooling
+    cooldown_ticks: 70
+    shape: {type: circle, radius: 3.0, at: target, range: 18, lock_at_tick: 10}   # position fixed 10 ticks before the hit
+    damage: 4                              # the burst when the cloud lands
+    zone: {duration_ticks: 100, damage: 2, every_ticks: 20, max_alive: 3}       # 1 heart per second inside; oldest zone removed above 3
+    animation: cast_cloud
+    sounds: {windup: root_cloud_windup, hit: root_cloud_burst, loop: root_cloud_hiss}
+    particles: {windup: glow, ground: warped_spore, hit: glow_squid_ink, zone: warped_spore}
+
+  spore_rain:                              # phase 3: a cloud on several players at once, then a long recovery
+    kind: attack
+    windup_ticks: 26                       # it rears on its back legs, front legs off the ground, the cap tips up to the sky and shakes; a ring under every targeted player
+    active_ticks: 4                        # it crashes down: the cap slams forward, the front legs hit the ground
+    recovery_ticks: 30                     # the cap rests on the ground in front of it, legs splayed, tendrils limp: the big punish window of phase 3
+    cooldown_ticks: 160
+    shape: {type: circle, radius: 2.5, at: targets, range: 18, lock_at_tick: 14}
+    targets: {base: 2, per_extra_player: 1, max: 5}   # extra = players above 2; one cloud per targeted player
+    damage: 4
+    zone: {duration_ticks: 80, damage: 2, every_ticks: 20, max_alive: 5}
+    animation: cast_rain
+    sounds: {windup: root_rain_windup, hit: root_rain_burst}
+    particles: {windup: glow, ground: warped_spore, hit: glow_squid_ink, zone: warped_spore}
+
+  tree_step:                               # folds into a plain mushroom, sinks, comes out of a tree with a puff of spores
+    kind: attack
+    windup_ticks: 16                       # the four legs and both roots fold in under the cap, the cap drops to the ground like a closing umbrella; the destination tree swirls with spores
+    active_ticks: 4                        # the puff around the tree it unfolds from
+    recovery_ticks: 24                     # still half folded against the trunk, legs not yet planted: punish window for whoever read the tree
+    cooldown_ticks: 120
+    teleport: {anchor: tree, pick: away_from_players, min_distance: 6}
+    shape: {type: circle, radius: 2.5, at: destination}
+    damage: 5
+    knockback: 0.8
+    animation: tree_step
+    sounds: {windup: root_step_sink, hit: root_step_emerge}
+    particles: {windup: mycelium, ground: warped_spore, hit: poof}
+
+  call_brood:                              # protectors: it is immune until every Dark Mushroom is dead
+    kind: summon
+    windup_ticks: 30                       # both jaws bend down and bite deep into the soil, the four legs stomp in turn; the soil bulges where each one will rise
+    recovery_ticks: 10
+    minion: dark_mushroom
+    count: {base: 3, per_extra_player: 1, max: 8}     # extra = players above 2
+    spawn: {around: boss, radius: 5, min_distance_from_players: 2}
+    protect: true
+    shield:
+      animation: spore_shield              # loop: it crouches low on its four legs, the cap sinks, both jaws stay bitten into the soil, the tendrils stretch down to the ground like a glowing curtain, spores turn around it
+      tether_particles: glow
+      immune_sound: root_shield_hit
+      break_animation: stagger             # when the last protector dies: the legs buckle
+      break_sound: root_shield_break
+      break_stagger_ticks: 40              # punish window
+    while_shielded: [spore_cloud, tree_step]          # it keeps attacking from range; the enrage timer keeps running
+    uses_per_phase: 1
+    animation: summon
+    sounds: {windup: root_summon_cry}
+    particles: {windup: mycelium, ground: dust_plume}
+
+  brew_mend:                               # heal channel: it draws the lavender sap of its bulb; damage stops it
+    kind: heal
+    windup_ticks: 16                       # the cap bows low, the bulb swells and turns bright lavender, the sap vein lights up
+    channel_ticks: 160                     # lavender pulses run down the vein into the trunk, the legs lock, the trunk throbs
+    heal_per_second: 0.02                  # 16 % of max HP when ignored
+    interrupt: {damage: 0.08, per_extra_player: 0.02, stagger_ticks: 60, goto_phase: p3}   # the bulb bursts
+    cap: phase                             # never above 70 % in p2
+    uses_per_phase: 2
+    animation: drink_sap
+    interrupt_animation: stagger
+    sounds: {windup: root_bulb_swell, loop: root_gulping, interrupt: root_bulb_burst}
+    particles: {windup: falling_obsidian_tear, loop: reverse_portal, interrupt: dragon_breath}
+
+reactions:                                 # what the players do -> what it does
+  - {when: phase_entered, phase: p2, do: call_brood}                 # the summon opens phase 2
+  - {when: hp_lost_in_phase, phase: p2, share: 0.12, do: brew_mend}  # each 12 % lost in p2 (max 2 uses)
+  - {when: players_far, distance: 12, ticks: 80, do: tree_step}      # ranged parties: it comes to a tree near them
+  - {when: hits_taken, count: 6, ticks: 60, do: tree_step}           # melee pressure: it leaves (cooldown still applies)
+  - {when: healed_nearby, do: target_healer}                         # next spore_cloud goes on the healer
+  - {when: players_grouped, count: 3, radius: 4, do: spore_cloud}    # stacked players get the cloud
+defences: []                               # its only defence is the protector shield of call_brood
+
+# walk: four-legged stilt gait (diagonal pairs), both jaw roots swaying and snapping idly, the cap bobbing.
+# stagger: the legs buckle, the cap drops forward. death: the legs fold one by one, the glow goes out.
+animations: [spawn, idle_calm, idle_angry, walk, hit, attack_lash, cast_cloud, cast_rain, tree_step,
+             summon, spore_shield, drink_sap, stagger, phase2_enter, phase3_enter, death]
+
+sounds:                                    # sounds that do not belong to a move
+  spawn: root_spawn
+  idle: root_idle
+  hurt: root_hurt
+  phase2_enter: root_phase2
+  phase3_enter: root_phase3
+  enrage: root_enrage
+  death: root_death

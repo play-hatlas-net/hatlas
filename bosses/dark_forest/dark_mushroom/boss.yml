@@ -1,20 +1,24 @@
-# Dark Mushroom: minion spec (boss pipeline step 1, iteration 2, 2026-11-20). Status: proposed.
-# Summoned by fungal_witch (protector in call_brood, side wave in p3). Format: plan §4.1, minions §4.5.
+# Dark Mushroom: minion spec (boss pipeline step 1, iteration 4, 2026-11-20). Status: proposed.
+# Summoned by fungal_root (protector in call_brood, side wave in p3). Format: plan §4.1, minions §4.5.
 # All times in ticks (20 = 1 s).
-# Iteration 2 (user): a little mushroom creature, not humanoid: cap = head, big eyes, toothed mouth
-# under the cap, four stubby legs.
+# Iteration 3 (user): aggressive, sharp pointed teeth, four small root legs and no arms, the
+# bioluminescent blue palette of the dungeon.
+# Iteration 4 (user): a taller mouth for long interlocking fangs, black inside and lavender gums so the
+# teeth read; the hitbox follows the body: 1.25 blocks.
 id: dark_mushroom
 kind: minion
 dungeon: dark_forest
 name: {en: "Dark Mushroom", fr: "Champignon noir"}
 lore: >
-  A cap that learned to bite. The witch's brood pushes out of the rot wherever her spores fall:
-  two mad eyes on a dark cap, a mouth far too wide under it, and four stubby legs that never stop.
+  A cap that learned to bite. The Fungal Root's brood pushes out of the rot wherever its spores fall:
+  two slit eyes burning cyan on a dark cap, a black mouth far too tall under it, crowded with long
+  fangs that cross like a trap, and four little roots that never stop running.
 
-# Hitbox in blocks (14 x 16 px): stem, legs and cap height. The cap (16 px wide) and the sprout reach outside.
-size: {width: 0.875, height: 1.0}
-# Extra bones, beside root, body (the stem) and head (the cap, with the eyes and upper teeth).
-# No arms: it is a four-legged mushroom. `jaw` drops to open the mouth, `sprout` wobbles.
+# Hitbox in blocks (14 x 20 px): legs, stem, mouth and cap (top at 19 px). The cap (16 px wide), the
+# long fangs and the sprout (top at 21 px = 1.3 blocks) reach outside.
+size: {width: 0.875, height: 1.25}
+# Extra bones, beside root, body (the stem and the mouth) and head (the cap, with the eyes and the
+# upper fangs). No arms: four root legs. `jaw` (lip and lower fangs) drops to open the mouth, `sprout` wobbles.
 bones: [jaw, leg_fl, leg_fr, leg_bl, leg_br, sprout]
 stats:
   hp: 24
@@ -25,15 +29,15 @@ stats:
 moves:
   bite:
     kind: attack
-    windup_ticks: 10                       # it rears on its back legs, the cap tips back, the jaw drops wide, the teeth glow
-    active_ticks: 3                        # it drops forward and snaps
-    recovery_ticks: 14                     # mouth shut, it shakes its cap
+    windup_ticks: 10                       # it rears on its back roots, the cap tips back, the jaw drops until the fangs no longer cross, every fang glows
+    active_ticks: 3                        # it lunges forward and the fangs slam shut, crossing again
+    recovery_ticks: 14                     # fangs locked, it shakes its cap and hisses
     cooldown_ticks: 30
     shape: {type: cone, range: 1.8, angle: 80}
     damage: 4
     animation: attack
     sounds: {windup: mushroom_bite_windup, hit: mushroom_bite}
-    particles: {windup: spore_blossom_air, hit: crit}
+    particles: {windup: glow, hit: crit}
 
 animations: [spawn, idle, walk, attack, hit, death]
 

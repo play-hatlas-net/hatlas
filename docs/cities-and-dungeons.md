@@ -449,12 +449,12 @@ BetterModel is checked in the pilot.
   covers the cut, the new track starts (Minecraft cannot cross-fade).
 
 ### 4.4 Pilot (✔ user 2026-11-18, OQ 104)
-One **`dark_forest` mini-boss**, the **Fungal Witch** (✔ user): spore clouds (poison zones on the ground),
+One **`dark_forest` mini-boss**, the **Fungal Root** (✔ user): spore clouds (poison zones on the ground),
 summoned mushroom minions, teleports between trees. ✔ Round 24 (user, 2026-11-20): its minion is the
 **Dark Mushroom** (a walking mushroom with a mouth under its cap, dark colours), summoned in a **summon
 phase** as **protectors** that must all die before the witch can be damaged (§4.5); the pilot also tries
 the **heal channel** (she drinks a potion) and **side waves**. The user's reference images are in
-`bosses/dark_forest/fungal_witch/refs/` (licence note: OQ 122). It goes through the whole pipeline, then into
+`bosses/dark_forest/fungal_root/refs/` (licence note: OQ 122). It goes through the whole pipeline, then into
 BetterModel on the test server, fought by bots. It answers: BetterModel per-bone hitboxes, cube budget,
 animation smoothness, Blockbench MCP usefulness, Fable vs Opus for the modeler, and the time per boss.
 Then the rest of `dark_forest` (2 mini-bosses + boss), then the other dungeons. It belongs to epic 2 (§9).
@@ -500,7 +500,56 @@ are **not needed** to damage the boss.
 **Minions are characters too** (`kind: minion`): own folder `bosses/<dungeon>/<minion>/`, own `boss.yml`
 (stats, moves, a few animations: `spawn`, `idle`, `walk`, `attack`, `death`), model, texture and sounds,
 made by the same pipeline with a smaller budget (≤ 40 cubes, texture ≤ 64×64, no music). The **Dark
-Mushroom** is the first one, made together with the Fungal Witch.
+Mushroom** is the first one, made together with the Fungal Root.
+
+**Any boss may summon** (user, round 25): a protector or side-wave phase is open to every mini-boss and
+final boss **when the creature fits it** (a fungus spawns spores, a necromancer raises dead…); the designer
+says why, or why not, in `boss.yml`.
+
+### 4.6 Hit zones and mutations (round 25, 2026-11-20, proposed: OQ 123–126)
+
+**Hit zones** (user idea: arm = less damage, eye or neck = more). Dark Souls-style weak points.
+- **How:** BetterModel builds **one hitbox per tagged bone** (server and client side, bones named
+  `hitbox` or carrying its hitbox tag). Our code reads which bone was hit and multiplies the damage.
+  Fallback if a version lacks it: one vanilla hitbox + a **ray test** from the player's eye (or the
+  projectile's path) against boxes that follow the bones. Either way, no extra entity per zone in our code.
+- **Format** in `boss.yml`:
+  ```yaml
+  hit_zones:
+    default: 1.0
+    eyes:     {bones: [chest], multiplier: 1.75, sound: weak_hit, particles: crit}   # weak point
+    sap_bulb: {bones: [bulb], multiplier: 1.5, heal_interrupt: 2.0}               # counts double vs the heal channel
+    legs:     {bones: [shin_*, foot_*], multiplier: 0.5, sound: bark_thud}         # armoured
+  ```
+- **Rules:** multipliers 0.5–2.0; the per-hit **damage cap applies after** the multiplier; weak points are
+  **visible** (they glow, the palette's cyan/lavender) and **reachable**: inside 3 blocks of a player's eye
+  for melee at some moment of the fight (a stagger, a cap slam) or open to bows; every boss has at least
+  one weak point and one armoured part; the validator checks that every zone bone exists.
+
+**Mutations** (user idea: below 10 % HP the creature loses its arm, cannot use its staff any more, runs faster).
+- **Not a new entity.** Killing the boss and spawning a mutated one loses its state (HP, damage per
+  player for loot and rune souls, target, phase timers), flickers, and fires death events. Instead the
+  **same entity keeps its model**: the mutated parts are **in the same `.bbmodel`** and the mutation
+  **hides bones** (lost arm) and/or **shows bones** that were hidden (new growth), plays a transition
+  animation (the arm is torn off: a short-lived display item + particles fall from the bone), and switches
+  to **another animation set** (`run` instead of `walk`). The behaviour change (moves removed or added,
+  speed, attack rate) is ours, in the phase.
+- **A whole new body** (a cocoon that hatches into another creature) is the only case for a second model:
+  swapped **on the same entity** (state kept), during a covered transition (smoke, the creature buried).
+- **Breakable parts** link both: a zone may have its own HP (`break_hp`); breaking it triggers the
+  mutation early (Dark Souls tail cut), with a reward (bonus loot roll, rune soul progress…).
+- **Format** in `boss.yml`:
+  ```yaml
+  mutations:
+    torn_spit_root:
+      when: {any: [{hp_below: 0.10}, {zone_broken: spit_root}]}
+      hide_bones: [spit_root, spit_jaw_l, spit_jaw_r, spit_pod]
+      animation: spit_root_torn          # transition, played once
+      animation_set: {walk: run_wild}    # replaces names from here on
+      remove_moves: [spore_cloud]
+      speed: 1.3
+      sounds: {start: root_tear}
+  ```
 
 ---
 
@@ -777,7 +826,7 @@ restarts on its own; its config stays small.
 - 105–113: runes, in [`runes.md`](runes.md) §12.
 - 100–104 ✔ (round 22, 2026-11-18): Fable 5.2 designer (+ modeler in the pilot), Opus 5.5 for the rest;
   Blockbench MCP for previews only; `boss.yml` draft approved; sounds **mostly AI generated** (commercial
-  licence, prompts recorded); pilot = the **Fungal Witch** of `dark_forest`.
+  licence, prompts recorded); pilot = the **Fungal Root** of `dark_forest`.
 - 117–122 ✔ (round 24, 2026-11-20): protectors as proposed; heal threshold +2 % per player above 2;
   side waves give **no XP**, no drops; minions `kind: minion` (≤ 40 cubes, 64×64); ElevenLabs SFX + Suno
   Pro/Premier, music budget as proposed; third-party refs mood only in git-ignored `refs/private/`.
