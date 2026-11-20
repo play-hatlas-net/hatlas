@@ -1,4 +1,4 @@
-# Dark Mushroom: minion spec (boss pipeline step 1, iteration 4, 2026-11-20). Status: proposed.
+# Dark Mushroom: minion spec (boss pipeline step 1, iteration 5, 2026-11-20). Status: proposed.
 # Summoned by fungal_root (protector in call_brood, side wave in p3). Format: plan §4.1, minions §4.5.
 # All times in ticks (20 = 1 s).
 # Iteration 3 (user): aggressive, sharp pointed teeth, four small root legs and no arms, the
@@ -39,6 +39,8 @@ moves:
     sounds: {windup: mushroom_bite_windup, hit: mushroom_bite}
     particles: {windup: glow, hit: crit}
 
+# No hit_zones and no mutations (optional for minions, plan §4.6): 24 HP is two or three hits, a weak
+# point would change nothing, and up to 13 of them may be alive at once (per-bone hitboxes for nothing).
 animations: [spawn, idle, walk, attack, hit, death]
 
 sounds:

@@ -502,11 +502,19 @@ are **not needed** to damage the boss.
 made by the same pipeline with a smaller budget (≤ 40 cubes, texture ≤ 64×64, no music). The **Dark
 Mushroom** is the first one, made together with the Fungal Root.
 
-**Any boss may summon** (user, round 25): a protector or side-wave phase is open to every mini-boss and
-final boss **when the creature fits it** (a fungus spawns spores, a necromancer raises dead…); the designer
-says why, or why not, in `boss.yml`.
+**Every mini-boss and final boss has a mob phase** (✔ user 2026-11-20, round 25; was "may summon"): at
+least one **side wave in parallel** with the boss's attacks, or one **protector summon** shielding its
+health while any minion lives (both allowed), themed on the creature. **Protector timeout**
+(`protect_timeout_ticks`, default 60 s, max 120 s): a bugged minion (stuck, out of the arena,
+unreachable) never blocks the fight: a protector that leaves the arena or cannot reach a player for
+10 s is teleported back; when the timeout ends the shield drops and the remaining protectors die (no
+XP, no drop). The enrage keeps running, so waiting is never better than killing them.
 
-### 4.6 Hit zones and mutations (round 25, 2026-11-20, proposed: OQ 123–126)
+**Every mini-boss and final boss mutates** (✔ user 2026-11-20, round 25): at least one mutation (§4.6)
+in the last or second-to-last phase, at `hp_below` ≤ 40 % (earlier if a breakable part is broken),
+changing both the body and the fight. Minions are exempt.
+
+### 4.6 Hit zones and mutations (✔ round 25, user 2026-11-20, OQ 123–126)
 
 **Hit zones** (user idea: arm = less damage, eye or neck = more). Dark Souls-style weak points.
 - **How:** BetterModel builds **one hitbox per tagged bone** (server and client side, bones named

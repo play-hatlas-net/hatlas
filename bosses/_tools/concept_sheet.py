@@ -8,6 +8,11 @@ Writes  <boss>/concept/front.png, side.png, back.png   views with the dashed hit
                                                                 palette only (checked by validate.py)
         <boss>/concept/palette.png                              the dungeon palette, used colours marked
         <boss>/concept/sheet.png                                everything on one image for the user gate
+        <boss>/concept/zones.png          only when boss.yml has hit_zones: front and side views with each
+                                          zone in a flat colour (weak / armoured / breakable) and a legend
+        <boss>/concept/mutation_<id>.png  one per boss.yml mutation: front and side views after it
+                                          (hide_bones removed, show_bones drawn)
+Bones named by a mutation's show_bones are hidden by default: they are left out of the normal views.
 
 concept.yml:
     parts:
@@ -29,7 +34,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).parent))
-from common import CUBE_BUDGET, PX_PER_BLOCK, hexa, load_palette, load_yaml  # noqa: E402
+from common import (CUBE_BUDGET, PX_PER_BLOCK, hexa, hidden_bones, load_palette, load_yaml,  # noqa: E402
+                    match_bones)
 
 BG = (35, 35, 43)
 PANEL = (46, 46, 56)
@@ -39,6 +45,10 @@ DIM = (150, 150, 162)
 HITBOX = (255, 90, 90)
 GROUND = (190, 190, 200)
 MARGIN = 3  # model pixels around the drawing
+# zone overlay colours (annotation only, not part of any dungeon palette)
+ZONE_COLOURS = {"weak": (255, 210, 63), "armoured": (120, 150, 235), "breakable": (255, 140, 26),
+                "normal": (190, 120, 255), "rest": (58, 60, 70)}
+ZONE_WORDS = {"weak": "weak point", "armoured": "armoured", "breakable": "breakable", "normal": "zone"}
 
 # view -> (screen axis, sign), (depth axis, sign): a bigger depth value is nearer to the viewer
 VIEWS = {
@@ -161,6 +171,109 @@ def annotate(raw, parts, view, bounds, hitbox_px, scale, title):
     return img
 
 
+def plain(raw, scale, title, hitbox_px, bounds, caption=""):
+    """Upscaled view with a title, the ground line and the dashed hitbox, no bone names."""
+    u_min, _, y_max = bounds
+    top, bottom, pad = 30, 26, 12
+    w, h = raw.width * scale, raw.height * scale
+    img = Image.new("RGB", (w + 2 * pad, h + top + bottom), BG)
+    draw = ImageDraw.Draw(img)
+    draw.rectangle((pad, top, pad + w, top + h), fill=PANEL_FOR_DARK)
+    big = raw.resize((w, h), Image.NEAREST)
+    img.paste(big, (pad, top), big)
+    gy = top + y_max * scale
+    draw.line((pad, gy, pad + w, gy), fill=GROUND, width=2)
+    half = hitbox_px[0] / 2
+    dashed_rect(draw, (pad + (-half - u_min) * scale, gy - hitbox_px[1] * scale,
+                       pad + (half - u_min) * scale, gy), HITBOX, width=1)
+    draw.text((pad + 4, 6), title, font=font(15), fill=TEXT)
+    if caption:
+        draw.text((pad + 4, top + h + 6), caption, font=font(12), fill=DIM)
+    return img
+
+
+def hstack(images, gap=0):
+    h = max(i.height for i in images)
+    out = Image.new("RGB", (sum(i.width for i in images) + gap * (len(images) - 1), h), BG)
+    x = 0
+    for i in images:
+        out.paste(i, (x, 0))
+        x += i.width + gap
+    return out
+
+
+def zone_class(zone):
+    if zone.get("break_hp") is not None:
+        return "breakable"
+    m = zone.get("multiplier", 1)
+    return "weak" if m > 1 else "armoured" if m < 1 else "normal"
+
+
+def zones_image(spec, parts, bounds, hitbox_px, scale):
+    """Front and side views with every hit zone in a flat colour, and a legend. None without hit_zones."""
+    zones = {k: v for k, v in (spec.get("hit_zones") or {}).items() if isinstance(v, dict)}
+    if not zones:
+        return None
+    bones = {p["bone"] for p in parts}
+    bone_class = {}
+    for zone in zones.values():
+        for b in match_bones(zone.get("bones"), bones):
+            bone_class[b] = zone_class(zone)
+    flat = [dict(p, color=bone_class.get(p["bone"], "rest")) for p in parts]
+    views = [plain(render_view(flat, ZONE_COLOURS, v, bounds), scale, t, hitbox_px, bounds)
+             for v, t in (("front", "HIT ZONES, front"), ("side", "HIT ZONES, side"))]
+    fs, lines = font(13), []
+    default = (spec.get("hit_zones") or {}).get("default", 1.0)
+    for name, zone in zones.items():
+        cls = zone_class(zone)
+        text = "%s: x%g (%s)" % (name, zone.get("multiplier", 1), ZONE_WORDS[cls])
+        extra = []
+        if zone.get("heal_interrupt") is not None:
+            extra.append("counts x%g against the heal channel" % zone["heal_interrupt"])
+        bh = zone.get("break_hp")
+        if bh is not None:
+            extra.append("breaks after %s damage" % (
+                "%g + %g per player above 2" % (bh.get("base", 0), bh.get("per_extra_player", 0))
+                if isinstance(bh, dict) else "%g" % bh))
+        lines.append((ZONE_COLOURS[cls], text, "; ".join(extra), "bones: " + ", ".join(map(str, zone.get("bones") or []))))
+    lines.append((ZONE_COLOURS["rest"], "everything else: x%g" % default, "", ""))
+    legend = Image.new("RGB", (430, views[0].height), BG)
+    d = ImageDraw.Draw(legend)
+    d.text((8, 6), "damage multiplier per zone (before the per-hit cap)", font=font(13), fill=DIM)
+    y = 36
+    for colour, text, extra, bones_txt in lines:
+        d.rectangle((8, y, 30, y + 22), fill=colour, outline=TEXT)
+        d.text((40, y - 2), text, font=font(15), fill=TEXT)
+        yy = y + 18
+        for more in (extra, bones_txt):
+            if more:
+                d.text((40, yy), more, font=fs, fill=DIM)
+                yy += 16
+        y = yy + 14
+    return hstack(views + [legend])
+
+
+def mutation_images(spec, parts, palette, bounds, hitbox_px, scale):
+    """{mutation id: image}: front and side views once the mutation has happened."""
+    out = {}
+    bones = {p["bone"] for p in parts}
+    default_hidden = hidden_bones(spec, bones)
+    for mid, mut in (spec.get("mutations") or {}).items():
+        gone = match_bones(mut.get("hide_bones"), bones) | (default_hidden - match_bones(mut.get("show_bones"), bones))
+        left = [p for p in parts if p["bone"] not in gone]
+        caption = "hidden: %s" % ", ".join(map(str, mut.get("hide_bones") or ["none"]))
+        if mut.get("show_bones"):
+            caption += "   shown: %s" % ", ".join(map(str, mut["show_bones"]))
+        pair = hstack([plain(render_view(left, palette, v, bounds), scale, "AFTER %s, %s" % (mid, v),
+                             hitbox_px, bounds) for v in ("front", "side")])
+        img = Image.new("RGB", (max(pair.width, int(ImageDraw.Draw(pair).textlength(caption, font=font(12))) + 24),
+                                pair.height), BG)
+        img.paste(pair, (0, 0))
+        ImageDraw.Draw(img).text((16, pair.height - 20), caption, font=font(12), fill=DIM)
+        out[mid] = img
+    return out
+
+
 def palette_image(palette, used):
     sw, row_h, cols = 30, 38, 4
     col_w = 230
@@ -210,29 +323,52 @@ def main() -> int:
     out = boss_dir / "concept"
     cubes = sum(1 for p in parts if not p.get("paint"))
     budget = CUBE_BUDGET[spec["kind"]]
+    hidden = hidden_bones(spec, {p["bone"] for p in parts})   # shown only by a mutation
+    shown = [p for p in parts if p["bone"] not in hidden]
     views = []
     for view, title in (("front", "FRONT"), ("side", "SIDE (right)"), ("back", "BACK")):
-        raw = render_view(parts, palette, view, bounds)
+        raw = render_view(shown, palette, view, bounds)
         raw.save(out / f"{view}_1x.png")
-        big = annotate(raw, parts, view, bounds, hitbox_px, scale, title)
+        big = annotate(raw, shown, view, bounds, hitbox_px, scale, title)
         big.save(out / f"{view}.png")
         views.append(big)
     used = {p["color"] for p in parts}
     pal = palette_image(palette, used)
     pal.save(out / "palette.png")
 
+    # second row of the sheet: hit zones and mutated views, at a smaller scale
+    small = max(2, scale * 3 // 5)
+    extras = []
+    for stale in list(out.glob("mutation_*.png")) + [out / "zones.png"]:
+        if stale.exists():
+            stale.unlink()
+    zimg = zones_image(spec, shown, bounds, hitbox_px, small)
+    if zimg is not None:
+        zimg.save(out / "zones.png")
+        extras.append(zimg)
+    for mid, mimg in mutation_images(spec, parts, palette, bounds, hitbox_px, small).items():
+        mimg.save(out / f"mutation_{mid}.png")
+        extras.append(mimg)
+    row2 = hstack(extras, gap=10) if extras else None
+
     head = 40
-    sheet_w = max(sum(v.width for v in views), pal.width)
-    sheet = Image.new("RGB", (sheet_w, head + views[0].height + pal.height), BG)
+    sheet_w = max(sum(v.width for v in views), pal.width, row2.width if row2 else 0)
+    sheet = Image.new("RGB", (sheet_w, head + views[0].height + (row2.height if row2 else 0) + pal.height), BG)
     d = ImageDraw.Draw(sheet)
-    d.text((10, 10), "%s (%s)   hitbox %g x %g blocks   %d cubes drawn / budget %d   1 px = 1/16 block, x%d"
-           % (spec["id"], spec["kind"], spec["size"]["width"], spec["size"]["height"], cubes, budget, scale),
+    d.text((10, 10), "%s (%s)   hitbox %g x %g blocks   %d cubes drawn / budget %d%s   1 px = 1/16 block, x%d"
+           % (spec["id"], spec["kind"], spec["size"]["width"], spec["size"]["height"], cubes, budget,
+              " (%d hidden until a mutation)" % sum(1 for p in parts if not p.get("paint") and p["bone"] in hidden)
+              if hidden else "", scale),
            font=font(17), fill=TEXT)
     x = 0
     for v in views:
         sheet.paste(v, (x, head))
         x += v.width
-    sheet.paste(pal, (0, head + views[0].height))
+    y = head + views[0].height
+    if row2:
+        sheet.paste(row2, (0, y))
+        y += row2.height
+    sheet.paste(pal, (0, y))
     sheet.save(out / "sheet.png")
     print(f"{spec['id']}: {cubes} cubes (budget {budget}), {len(parts) - cubes} painted details, "
           f"{len(used)} colours, scale x{scale} -> {out}")

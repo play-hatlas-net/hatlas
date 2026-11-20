@@ -1,7 +1,7 @@
 # Dark Forest: style guide
 
 Read by every agent of the boss pipeline (`.claude/skills/boss-building/SKILL.md`). Written at the first
-boss of the dungeon (Fungal Root, 2026-11-20); **iteration 4** after the user's remarks (no humanoid part
+boss of the dungeon (Fungal Root, 2026-11-20); **iteration 5** after the user's remarks (no humanoid part
 at all, bioluminescent blue palette, final boss 5–7 blocks, jaws in the limbs, taller characters). **Status: proposed, waiting for the user's
 approval.**
 
@@ -54,6 +54,9 @@ Rules:
   rims**: a `cap_light` rim on every cap, `root` on knots and feet, a `cyan_deep` vein along long limbs,
   and glow where the player must look (eyes, weapon, weak point).
 - Shading is done with the neighbouring palette colour (`bark` → `night_bark`), never with a new colour.
+- **Hit zones follow the lights** (plan §4.6): a weak point is always one of the glowing things (cyan eyes,
+  a lavender sap sac); armoured parts are the dark, hard ones (`root` knots, shins, feet). What a
+  mutation tears off leaves a splintered `stem_pale` stump bleeding `lilac_deep` sap.
 
 ## 3. Silhouette and proportions
 - 1 px = 1/16 block. Cubes on the pixel grid, no rotation at rest except caps and tips.

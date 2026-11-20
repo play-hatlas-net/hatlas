@@ -1,4 +1,4 @@
-# Fungal Root: spec (boss pipeline step 1, iteration 4, 2026-11-20). Status: proposed.
+# Fungal Root: spec (boss pipeline step 1, iteration 5, 2026-11-20). Status: proposed.
 # Format: docs/cities-and-dungeons.md §4.1, rules §4.2, phase mechanics §4.5.
 # All times in ticks (20 = 1 s). Shares (hp_below, heal, interrupt) are shares of max HP.
 # Every animation and sound name is written once here; later steps reuse them exactly.
@@ -6,6 +6,8 @@
 # forward under its cap, static eyes in the trunk, nothing held. Bioluminescent blue palette.
 # Iteration 4 (user): both attacking roots on the same side, both ending in jaws (freaky: uneven fangs,
 # lavender gums, split bark, boils, glowing drool); 5 blocks tall; hitbox width 1.75 approved.
+# Iteration 5 (plan §4.6): hit zones (eyes and sap bulb weak, shins and feet armoured), the spit root is
+# breakable, mutation torn_spit_root (it loses the spit root, cannot throw spore clouds, runs wild).
 id: fungal_root
 kind: mini_boss
 rune: nature
@@ -35,11 +37,14 @@ size: {width: 1.75, height: 4.5}
 # lash_mid, then `maw` (upper jaw) and `jaw` (long lower jaw that snaps). The spit root (back, the old
 # staff): spit_base, spit_root (the tall shaft), then its tip split into spit_jaw_l and spit_jaw_r
 # (two halves that open sideways), with spit_pod (the spore pod) inside the gape. `bulb` is the sap sac
-# and its vein, under the cap on the left.
+# and its vein, under the cap on the left. `eyes` is the eye plate on the front of the upper trunk: its
+# own bone only so that it can be a hit zone; it is static (never keyframed, the eyes do not move).
+# `spit_stump` is hidden until the mutation torn_spit_root shows it.
 bones: [hip, chest, neck, cap_sprouts, tendrils_f, tendrils_b, tendrils_l, tendrils_r,
         leg_fl, leg_fr, leg_bl, leg_br, shin_fl, shin_fr, shin_bl, shin_br,
         foot_fl, foot_fr, foot_bl, foot_br,
-        lash_base, lash_mid, maw, jaw, spit_base, spit_root, spit_jaw_l, spit_jaw_r, spit_pod, bulb]
+        lash_base, lash_mid, maw, jaw, spit_base, spit_root, spit_jaw_l, spit_jaw_r, spit_pod, spit_stump,
+        bulb, eyes]
 stats:
   hp: 600
   armor: 6
@@ -137,6 +142,10 @@ moves:
     count: {base: 3, per_extra_player: 1, max: 8}     # extra = players above 2
     spawn: {around: boss, radius: 5, min_distance_from_players: 2}
     protect: true
+    # Safety against a bugged minion (plan §4.5): a protector out of the arena or unable to reach a player
+    # for 10 s is teleported back to its spawn point; after 60 s the shield drops anyway and the protectors
+    # still alive die with a puff of spores (no XP, no drop). The enrage timer runs all along.
+    protect_timeout_ticks: 1200
     shield:
       animation: spore_shield              # loop: it crouches low on its four legs, the cap sinks, both jaws stay bitten into the soil, the tendrils stretch down to the ground like a glowing curtain, spores turn around it
       tether_particles: glow
@@ -172,10 +181,79 @@ reactions:                                 # what the players do -> what it does
   - {when: players_grouped, count: 3, radius: 4, do: spore_cloud}    # stacked players get the cloud
 defences: []                               # its only defence is the protector shield of call_brood
 
+# Hit zones (plan §4.6): damage multiplier by the bone that was hit, applied BEFORE damage_cap_per_hit.
+# A zone takes no damage while the boss is immune (protector shield). Zone hits also hurt the boss.
+# From below, a melee player reaches the shins first: hitting what is in reach is punished (x0.5), aiming
+# at the root mass or the lash jaw is normal (x1), aiming up under the cap is rewarded.
+hit_zones:
+  default: 1.0                             # root mass, trunk, thighs, cap, lash root and its jaw. The cap stays
+                                           # at 1.0: it is the easy bow target, and bows already lose on the legs
+  eyes:                                    # weak point: the glowing knot-holes (0.5 x 0.75 block, 3 to 3.7 blocks up)
+    bones: [eyes]
+    multiplier: 1.75
+    # always open to bows from the front. Melee: at rest only from right under the cap, between the front
+    # legs, looking up; easy when the trunk is down (these animations): shield break and heal interrupt
+    # (stagger), the cap slam of spore_rain (cast_rain recovery), the bow of the heal channel (drink_sap).
+    reach: {ranged: always, melee: [stagger, cast_rain, drink_sap]}
+    sound: root_weak_hit
+    particles: glow
+  sap_bulb:                                # weak point, and the way to stop the heal: hits on it count double
+    bones: [bulb]
+    multiplier: 1.5
+    heal_interrupt: 2.0                    # damage on the bulb counts x2 against brew_mend's interrupt threshold
+    reach: {ranged: always, melee: [drink_sap, stagger, cast_rain]}   # hangs under the cap, front left; lowest when it drinks
+    sound: root_bulb_hit
+    particles: falling_obsidian_tear
+  legs:                                    # armoured: knee knots, shins and feet are old hard root
+    bones: [shin_*, foot_*]
+    multiplier: 0.5
+    sound: root_bark_thud
+    particles: dust_plume
+  spit_root:                               # breakable: the tall root that spits the spore clouds
+    bones: [spit_root, spit_jaw_l, spit_jaw_r, spit_pod]
+    multiplier: 1.0
+    # 90 = 15 % of max HP for 2 players: at least 8 hits at the damage cap (12), about half of what phase 1
+    # asks (180 HP), so it can be torn off in phase 1 only by a party that aims at it on purpose. +15 per
+    # player above 2 (8 players: 180) so a big party cannot do it in one burst. Its shaft is in melee reach
+    # (2 to 3.7 blocks up, on its right side); the jaws at the top are for bows.
+    break_hp: {base: 90, per_extra_player: 15}
+    # Reward for tearing it off BEFORE the 10 % trigger: one more roll of the mini-boss loot table for each
+    # participant of the party that broke it (last hit on the zone; in a city event: that faction's players).
+    reward: {loot_rolls: 1, to: breaker_party, only_before_hp: 0.10}
+    sound: root_spit_hit
+    particles: crit
+
+# Mutations (plan §4.6): the SAME entity and model; bones are hidden or shown, the animation set changes.
+mutations:
+  torn_spit_root:
+    when: {any: [{hp_below: 0.10}, {zone_broken: spit_root}]}       # whichever comes first, once
+    # Mandatory late mutation (skill step 1): 0.10 is below 0.40 and inside the last phase (p3, below 0.40).
+    # Kept at 0.10, not moved up to 0.40: p3 already changes the fight at 0.40 (spore_rain, waves, speed);
+    # the tear is the last-stand beat on top of it, unless the party tears the root off earlier.
+    # Never in the middle of a move, of the heal channel or of the protector shield: it waits for the end.
+    hide_bones: [spit_root, spit_jaw_l, spit_jaw_r, spit_pod]       # spit_base stays on the root mass
+    show_bones: [spit_stump]                                         # the splintered stub, bleeding sap
+    animation: spit_root_torn              # the spit root rips at its knot and falls (a falling display item, sap and
+                                           # spores from the stump), the creature rears and shrieks, the lash jaw snaps at the air
+    transition_ticks: 40                   # it cannot act: a punish window (the party earned it, or the fight is ending)
+    animation_set: {walk: run_wild}        # a lopsided gallop, the cap thrown from side to side, the lash jaw dragging and snapping
+    remove_moves: [spore_cloud]            # no spit root, no thrown cloud
+    # Wherever a phase, the protector shield or a reaction names a removed move, this one is used instead:
+    # the clouds now come from the cap (slower, on several players, with the long punish window after).
+    # Broken in phase 1 or 2, this is how the fight keeps its poison zones; phase 3 keeps its own spore_rain.
+    substitute: {spore_cloud: spore_rain}
+    speed: 1.3                             # movement speed only, on top of the phase's speed (0.9 -> 1.17, in p3 1.46 blocks/s);
+                                           # cooldowns keep the phase's value, wind-ups are never shortened
+    sounds: {start: root_tear, loop: root_wild_breath}
+    particles: {start: falling_obsidian_tear}
+# Not changed by the mutation: maw_lash (the lash jaw alone snaps), tree_step, call_brood and its shield,
+# brew_mend (the sap comes from the bulb, not from the spit root).
+
 # walk: four-legged stilt gait (diagonal pairs), both jaw roots swaying and snapping idly, the cap bobbing.
 # stagger: the legs buckle, the cap drops forward. death: the legs fold one by one, the glow goes out.
 animations: [spawn, idle_calm, idle_angry, walk, hit, attack_lash, cast_cloud, cast_rain, tree_step,
-             summon, spore_shield, drink_sap, stagger, phase2_enter, phase3_enter, death]
+             summon, spore_shield, drink_sap, stagger, phase2_enter, phase3_enter, death,
+             spit_root_torn, run_wild]
 
 sounds:                                    # sounds that do not belong to a move
   spawn: root_spawn

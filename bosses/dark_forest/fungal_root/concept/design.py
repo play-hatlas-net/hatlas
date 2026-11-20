@@ -1,4 +1,4 @@
-"""Fungal Root concept (iteration 4): a walking root mass under a heavy glowing cap. No humanoid part.
+"""Fungal Root concept (iteration 5): a walking root mass under a heavy glowing cap. No humanoid part.
 
 Writes concept.yml next to this file. Run:
     bosses/_tools/.venv/Scripts/python bosses/dark_forest/fungal_root/concept/design.py
@@ -14,6 +14,8 @@ front it is a lopsided growth, not a figure with two arms), and both end in jaws
   - the spit root (the old staff): stands taller than the cap and splits open at its tip into two
     peeled halves lined with teeth, the glowing spore pod sitting inside the gape. Nothing is held.
 A lavender sap bulb hangs under the cap on the left, fed into the trunk by a sap vein (the heal channel).
+Iteration 5: the eyes sit on their own static bone `eyes` (a hit zone), and `spit_stump` is drawn but
+hidden until the mutation `torn_spit_root` (boss.yml) removes the spit root.
 """
 import sys
 from pathlib import Path
@@ -161,6 +163,17 @@ c.fx("spit_jaw_r", 7, 68, 1, 3, 29, "night_bark")
 c.fx("spit_jaw_r", 6, 62, 1, 4, 27, "night_bark")
 c.fx("spit_jaw_r", 8, 63, 1, 3, 27, "stem_pale")
 c.fx("spit_jaw_r", 9, 70, 1, 1, 29, "cyan_glow")
+c.note("spit_stump: HIDDEN until the mutation torn_spit_root shows it: the splintered stub left on spit_base")
+c.box("spit_stump", 18, 30, 5, 4, 5, 5, "root")
+c.box("spit_stump", 19, 35, 6, 1, 3, 1, "stem_pale")      # splinters of pale wood
+c.box("spit_stump", 21, 35, 8, 1, 2, 1, "stem_pale")
+c.fz("spit_stump", 18, 34, 4, 1, 5, "lilac_deep")         # sap bleeding from the tear
+c.fz("spit_stump", 20, 31, 1, 3, 5, "lilac_deep")
+c.fz("spit_stump", 20, 31, 1, 1, 5, "lilac_glow")
+c.fz("spit_stump", 18, 34, 4, 1, 10, "lilac_deep")
+c.fx("spit_stump", 5, 34, 5, 1, 22, "lilac_deep")
+c.fx("spit_stump", 7, 32, 1, 2, 22, "lilac_deep")
+c.fx("spit_stump", 7, 32, 1, 1, 22, "lilac_glow")
 
 
 class Lift:
@@ -218,17 +231,19 @@ c.box("chest", -4, 39, -7, 8, 12, 8, "bark")
 c.box("chest", -3, 41, 1, 6, 5, 3, "root")                # burl on the back of the bend
 c.box("chest", -4, 46, 1, 6, 1, 4, "cap_deep")            # shelf fungus on the burl
 c.box("chest", 4, 47, -5, 2, 1, 4, "lichen")
-c.fz("chest", 1, 43, 3, 7, -7, "void_dark")               # right eye: tall knot-hole
-c.fz("chest", 1, 44, 2, 5, -7, "cyan_glow")
-c.fz("chest", 2, 46, 1, 2, -7, "glow_core")
-c.fz("chest", -4, 41, 3, 5, -7, "void_dark")              # left eye: lower, smaller
-c.fz("chest", -3, 42, 2, 3, -7, "cyan_glow")
-c.fz("chest", -3, 43, 1, 1, -7, "glow_core")
-c.fz("chest", -2, 47, 3, 3, -7, "void_dark")              # third, tiny
-c.fz("chest", -1, 48, 1, 1, -7, "cyan_glow")
-c.fz("chest", -4, 39, 8, 1, -7, "night_bark")
-c.fz("chest", 0, 40, 1, 3, -7, "night_bark")
-c.fz("chest", -1, 39, 1, 2, -7, "cyan_deep")              # the trunk vein reaches the eyes
+c.box("eyes", -4, 39, -8, 8, 12, 1, "bark")              # eye plate: the front of the upper trunk, its own
+                                                          # bone only to be a hit zone (weak point); never animated
+c.fz("eyes", 1, 43, 3, 7, -8, "void_dark")               # right eye: tall knot-hole
+c.fz("eyes", 1, 44, 2, 5, -8, "cyan_glow")
+c.fz("eyes", 2, 46, 1, 2, -8, "glow_core")
+c.fz("eyes", -4, 41, 3, 5, -8, "void_dark")              # left eye: lower, smaller
+c.fz("eyes", -3, 42, 2, 3, -8, "cyan_glow")
+c.fz("eyes", -3, 43, 1, 1, -8, "glow_core")
+c.fz("eyes", -2, 47, 3, 3, -8, "void_dark")              # third, tiny
+c.fz("eyes", -1, 48, 1, 1, -8, "cyan_glow")
+c.fz("eyes", -4, 39, 8, 1, -8, "night_bark")
+c.fz("eyes", 0, 40, 1, 3, -8, "night_bark")
+c.fz("eyes", -1, 39, 1, 2, -8, "cyan_deep")              # the trunk vein reaches the eyes
 c.fx("chest", -5, 40, 1, 9, 4, "night_bark")
 c.fx("chest", -2, 39, 1, 7, 4, "night_bark")
 c.fz("chest", -2, 46, 1, 5, 1, "night_bark")

@@ -551,10 +551,11 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 122. ~~**Reference images**~~ — ✔ answered 2026-11-20: third-party refs are mood only, kept in git-ignored `bosses/**/refs/private/`; the design stays our own.
 
 **Round 25 (2026-11-20)**: Fungal Witch renamed **Fungal Root**; step 1 iteration 4 choices ✔ (spit jaw opens sideways, jaws kept, Dark Mushroom 5 long fangs, **final bosses 6–7 blocks tall**). User ideas: any boss may summon when it fits; **hit zones** (weak points, armoured parts) and **mutations** during a fight. Plan [`docs/cities-and-dungeons.md`](docs/cities-and-dungeons.md) §4.5–4.6.
-123. **Hit zones**: per-bone hitboxes of BetterModel (ray test fallback), multipliers 0.5–2.0 before the damage cap, weak points visible and reachable, at least one weak and one armoured zone per boss (recommended)?
-124. **Mutations**: same entity, hidden/shown bones of the same `.bbmodel` + transition animation + another animation set, behaviour changed in code; a second model only for a whole new body, swapped on the same entity (recommended)?
-125. **Breakable parts**: a zone with its own HP whose break triggers the mutation early, with a reward (recommended)?
-126. **Fungal Root**: add hit zones (eyes ×1.75, sap bulb ×1.5 and double against the heal, legs ×0.5) and the mutation "spit root torn off" (below 10 % HP or when broken: no more `spore_cloud`, faster) in an extra step 1 round, beyond the cap of 3 (recommended), or after the pilot?
+123. ~~**Hit zones**~~ — ✔ answered 2026-11-20: as proposed: per-bone hitboxes of BetterModel (ray test fallback), multipliers 0.5–2.0 before the damage cap, weak points visible and reachable, at least one weak and one armoured zone per boss.
+124. ~~**Mutations**~~ — ✔ answered 2026-11-20: **same entity**: hidden/shown bones of the same `.bbmodel` + transition animation + another animation set, behaviour in code; a second model only for a whole new body, swapped on the same entity.
+125. ~~**Breakable parts**~~ — ✔ answered 2026-11-20: yes, a zone may have its own HP; breaking it triggers the mutation early **with a reward**.
+126. ~~**Fungal Root zones and mutation**~~ — ✔ answered 2026-11-20: **now**, in an extra step 1 round (iteration 5, beyond the cap of 3 by the user's go).
+- ✔ user 2026-11-20 (round 25, no question): **every mini-boss and final boss** must have **a mob phase** (side wave in parallel or protector summon), a **protector timeout** (`protect_timeout_ticks`, default 60 s, max 120 s, bugged minions teleported back after 10 s) and **at least one mutation** at ≤ 40 % HP in the last or second-to-last phase; minions exempt (skill `boss-building` step 1 and §5, plan §4.5).
 
 ## Changelog
 

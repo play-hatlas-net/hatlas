@@ -54,5 +54,22 @@ def load_palette(style_md: Path) -> dict[str, tuple[int, int, int]]:
     return palette
 
 
+def match_bones(patterns, bones) -> set[str]:
+    """Bones named by a list of names or `shin_*` patterns (boss.yml hit_zones, hide_bones, show_bones)."""
+    import fnmatch
+    out: set[str] = set()
+    for pat in patterns or []:
+        out |= set(fnmatch.filter(bones, str(pat)))
+    return out
+
+
+def hidden_bones(spec, bones) -> set[str]:
+    """Bones hidden until a mutation shows them (every mutation's show_bones)."""
+    out: set[str] = set()
+    for mut in (spec.get("mutations") or {}).values():
+        out |= match_bones(mut.get("show_bones"), bones)
+    return out
+
+
 def hexa(rgb) -> str:
     return "#%02x%02x%02x" % tuple(rgb[:3])

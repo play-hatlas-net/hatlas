@@ -102,7 +102,29 @@ blocks the gate.
     stagger, optionally `goto_phase`; never above the phase ceiling;
   - **side waves** (`phases[].waves`): optional adds, never required, capped by `max_alive`.
   Each summoned or wave mob that is not vanilla is a **minion** with its own spec (`kind: minion`, own
-  folder): write the minion's `boss.yml` and concept sheet in the same step.
+  folder): write the minion's `boss.yml` and concept sheet in the same step. Any boss may summon when
+  the creature fits it; say why, or why not.
+- **Mandatory for every mini-boss and final boss** (✔ user 2026-11-20, round 25; minions exempt):
+  - **at least one mob phase**: either side waves running **in parallel** with the boss's attacks
+    (`phases[].waves`), or a **protector** summon (`protect: true`) whose minions shield the boss's
+    health while any of them is alive. Both may exist.
+  - **every protector summon has a timeout** `protect_timeout_ticks` (default **1200 = 60 s**, at most
+    2400) in case a minion is bugged (stuck in a wall, out of the arena, unreachable): when it ends the
+    shield drops, the remaining protectors die with an effect (no XP, no drop), and the fight goes on.
+    A protector that leaves the arena or cannot path to a player for 10 s is teleported back to its
+    spawn point first. The enrage timer keeps running during the shield, so waiting out the timeout is
+    never the better play.
+  - **at least one mutation** (plan §4.6) that triggers **in one of the last phases** (the last or the
+    second-to-last), by `hp_below` (≤ 0.40) and optionally earlier by a broken part; it must visibly
+    change the body (hidden/shown bones) and the fight (moves, speed or rhythm).
+- **Hit zones** (plan §4.6, ✔ OQ 123): `hit_zones` maps bones to damage multipliers 0.5–2.0 (applied
+  before the per-hit cap); at least one **weak point** (glows, reachable in melee at some moment or by
+  bow) and one **armoured** part per boss/mini-boss (minions: optional). A zone may have `break_hp`
+  (✔ OQ 125): breaking it triggers a mutation early and gives a reward.
+- **Mutations** (plan §4.6, ✔ OQ 124): `mutations` on the **same entity**: `hide_bones` / `show_bones`
+  of the same model (mutated parts are drawn in the concept and built in step 2, hidden ones marked),
+  a transition `animation`, an `animation_set` swap, moves removed/added, speed. Never kill and respawn.
+  A second model only for a whole new body, swapped on the same entity.
 - Music per phase (`phases[].music`) only within the budget of plan §4.3 (final boss: one per phase;
   mini-boss: one; minion: none).
 - Concept sheet: front, side, back views as **pixel art at the model's scale** (1 px = 1/16 block),
@@ -169,6 +191,9 @@ blocks the gate.
   `protect: true` has a shield animation and an immune sound; `kind: heal` has `interrupt.damage` and
   `cap: phase`; a `goto_phase` names a later phase; `max_alive` is set on every wave; music only within
   the budget of plan §4.3.
+- Mandatory mechanics (mini-boss and final boss): at least one side wave or protector summon; every
+  `protect: true` has `protect_timeout_ticks` (≤ 2400); at least one mutation whose `hp_below` is ≤ 0.40
+  and falls in the last or second-to-last phase, with `hide_bones` or `show_bones` and a fight change.
 - Animation length = `windup + active + recovery` for each move (± 1 tick).
 - Model: bone names, cube count ≤ budget, cubes on the 1/16 grid, texture size, palette only (± 0 colours
   outside `style.md`), hitbox = `size`.
