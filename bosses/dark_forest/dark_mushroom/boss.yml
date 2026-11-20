@@ -1,0 +1,39 @@
+# Dark Mushroom: minion spec (boss pipeline step 1, iteration 1, 2026-11-20). Status: proposed.
+# Summoned by fungal_witch (protector in call_brood, side wave in p3). Format: plan §4.1, minions §4.5.
+# All times in ticks (20 = 1 s).
+id: dark_mushroom
+kind: minion
+dungeon: dark_forest
+name: {en: "Dark Mushroom", fr: "Champignon noir"}
+lore: >
+  A cap that learned to bite. The witch's brood rises from the rot wherever she plants her staff:
+  its cap is its upper jaw, and it opens like a lid.
+
+size: {width: 0.875, height: 0.875}        # hitbox in blocks (14 x 14 px)
+bones: [jaw, leg_fl, leg_fr, leg_bl, leg_br]   # extras; `head` is the cap (upper jaw), `jaw` the teeth row on the stem
+stats:
+  hp: 24
+  armor: 0
+  damage_cap_per_hit: 24                   # no cap in practice: a strong hit may kill it at once
+  walk_speed: 3.2                          # blocks per second, a little slower than a player walking
+
+moves:
+  bite:
+    kind: attack
+    windup_ticks: 10                       # the cap swings wide open, the teeth glow
+    active_ticks: 3
+    recovery_ticks: 14                     # cap shut, it shakes itself
+    cooldown_ticks: 30
+    shape: {type: cone, range: 1.8, angle: 80}
+    damage: 4
+    animation: attack
+    sounds: {windup: mushroom_bite_windup, hit: mushroom_bite}
+    particles: {windup: spore_blossom_air, hit: crit}
+
+animations: [spawn, idle, walk, attack, hit, death]
+
+sounds:
+  spawn: mushroom_spawn
+  idle: mushroom_idle
+  hurt: mushroom_hurt
+  death: mushroom_death

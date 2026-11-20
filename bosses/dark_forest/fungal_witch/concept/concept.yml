@@ -1,0 +1,129 @@
+# Fungal Witch: concept as boxes, drawn by bosses/_tools/concept_sheet.py (format in its header).
+# Pixels (1/16 block). y up from the ground, she faces -z, her right side is +x.
+# `paint: true` = detail painted on the texture (not a cube). 37 cubes here; the modeler has up to 120.
+parts:
+  # --- legs: thin roots under the skirt
+  - {bone: leg_r, from: [1, 0, -1], size: [3, 8, 3], color: bark}
+  - {bone: leg_r, from: [1, 0, -4], size: [3, 2, 3], color: root}
+  - {bone: leg_l, from: [-4, 0, -1], size: [3, 8, 3], color: bark}
+  - {bone: leg_l, from: [-4, 0, -4], size: [3, 2, 3], color: root}
+
+  # --- skirt: ragged moss robe, two tiers
+  - {bone: skirt, from: [-7, 6, -5], size: [14, 5, 10], color: moss_dark}
+  - {bone: skirt, from: [-6, 11, -4], size: [12, 9, 8], color: moss_dark}
+  - {bone: skirt, from: [-2, 6, -5], size: [2, 2, 0], color: night_bark, paint: true}
+  - {bone: skirt, from: [4, 6, -5], size: [1, 3, 0], color: night_bark, paint: true}
+  - {bone: skirt, from: [-6, 6, -5], size: [1, 2, 0], color: night_bark, paint: true}
+  - {bone: skirt, from: [2, 8, -5], size: [3, 2, 0], color: moss, paint: true}
+  - {bone: skirt, from: [-5, 13, -4], size: [2, 3, 0], color: moss, paint: true}
+  - {bone: skirt, from: [3, 15, -4], size: [2, 2, 0], color: moss, paint: true}
+  - {bone: skirt, from: [7, 6, -1], size: [0, 3, 2], color: night_bark, paint: true}
+  - {bone: skirt, from: [7, 8, 2], size: [0, 2, 2], color: moss, paint: true}
+  - {bone: skirt, from: [-3, 6, 5], size: [2, 3, 0], color: night_bark, paint: true}
+  - {bone: skirt, from: [2, 7, 5], size: [3, 2, 0], color: moss, paint: true}
+  - {bone: skirt, from: [-4, 14, 4], size: [2, 3, 0], color: moss, paint: true}
+
+  # --- body: bark trunk, hunched (chest 1 px forward), moss shawl, shelf fungus on the back
+  - {bone: body, from: [-5, 20, -4], size: [10, 6, 6], color: bark}
+  - {bone: body, from: [-5, 26, -5], size: [10, 6, 6], color: bark}
+  - {bone: body, from: [-6, 29, -6], size: [12, 4, 8], color: moss}
+  - {bone: body, from: [-4, 27, 1], size: [8, 1, 4], color: cap}
+  - {bone: body, from: [-3, 23, 2], size: [6, 1, 3], color: cap_deep}
+  - {bone: body, from: [-5, 20, -4], size: [10, 1, 0], color: night_bark, paint: true}
+  - {bone: body, from: [-2, 22, -4], size: [1, 3, 0], color: night_bark, paint: true}
+  - {bone: body, from: [2, 21, -4], size: [1, 2, 0], color: night_bark, paint: true}
+  - {bone: body, from: [-3, 26, -5], size: [1, 3, 0], color: night_bark, paint: true}
+  - {bone: body, from: [1, 26, -5], size: [1, 2, 0], color: night_bark, paint: true}
+  - {bone: body, from: [-5, 20, 2], size: [10, 1, 0], color: night_bark, paint: true}
+  - {bone: body, from: [5, 20, -4], size: [0, 1, 6], color: night_bark, paint: true}
+  - {bone: body, from: [-2, 28, 5], size: [2, 1, 0], color: spore_glow, paint: true}
+  - {bone: body, from: [2, 28, 5], size: [1, 1, 0], color: spore_glow, paint: true}
+  - {bone: body, from: [-4, 30, -6], size: [2, 1, 0], color: moss_dark, paint: true}
+  - {bone: body, from: [3, 31, -6], size: [2, 1, 0], color: moss_dark, paint: true}
+
+  # --- head: small pale face, amber eyes, long nose, mycelium hair
+  - {bone: head, from: [-4, 32, -7], size: [8, 8, 8], color: gill_pale}
+  - {bone: head, from: [-1, 34, -10], size: [2, 2, 3], color: stem_shadow}
+  - {bone: head, from: [-5, 30, -3], size: [1, 8, 3], color: stem_shadow}
+  - {bone: head, from: [4, 30, -3], size: [1, 8, 3], color: stem_shadow}
+  - {bone: head, from: [-4, 29, 1], size: [8, 6, 1], color: stem_shadow}
+  - {bone: head, from: [-4, 38, -7], size: [8, 1, 0], color: stem_shadow, paint: true}
+  - {bone: head, from: [-3, 36, -7], size: [2, 2, 0], color: eye_amber, paint: true}
+  - {bone: head, from: [1, 36, -7], size: [2, 2, 0], color: eye_amber, paint: true}
+  - {bone: head, from: [-2, 33, -7], size: [4, 1, 0], color: maw_dark, paint: true}
+  - {bone: head, from: [4, 36, -6], size: [0, 2, 2], color: eye_amber, paint: true}
+  - {bone: head, from: [4, 33, -7], size: [0, 1, 3], color: maw_dark, paint: true}
+
+  # --- hat: the cap grown into a witch hat; wide brim, cone that leans back
+  - {bone: hat, from: [-11, 39, -14], size: [22, 2, 22], color: cap_deep}
+  # gills under the brim: the hat is a mushroom cap
+  - {bone: hat, from: [-10, 38, -13], size: [20, 1, 20], color: gill_pale}
+  - {bone: hat, from: [-9, 38, -13], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [-9, 38, 7], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [10, 38, -12], size: [0, 1, 1], color: stem_shadow, paint: true}
+  - {bone: hat, from: [-5, 38, -13], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [-5, 38, 7], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [10, 38, -8], size: [0, 1, 1], color: stem_shadow, paint: true}
+  - {bone: hat, from: [-1, 38, -13], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [-1, 38, 7], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [10, 38, -4], size: [0, 1, 1], color: stem_shadow, paint: true}
+  - {bone: hat, from: [3, 38, -13], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [3, 38, 7], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [10, 38, 0], size: [0, 1, 1], color: stem_shadow, paint: true}
+  - {bone: hat, from: [7, 38, -13], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [7, 38, 7], size: [1, 1, 0], color: stem_shadow, paint: true}
+  - {bone: hat, from: [10, 38, 4], size: [0, 1, 1], color: stem_shadow, paint: true}
+  - {bone: hat, from: [-7, 41, -10], size: [14, 4, 14], color: cap}
+  - {bone: hat, from: [-5, 45, -7], size: [10, 4, 10], color: cap}
+  - {bone: hat, from: [-11, 40, -14], size: [22, 1, 0], color: cap_light, paint: true}
+  - {bone: hat, from: [11, 40, -14], size: [0, 1, 22], color: cap_light, paint: true}
+  - {bone: hat, from: [-11, 40, 8], size: [22, 1, 0], color: cap_light, paint: true}
+  - {bone: hat, from: [-7, 41, -10], size: [14, 1, 0], color: night_bark, paint: true}
+  - {bone: hat, from: [7, 41, -10], size: [0, 1, 14], color: night_bark, paint: true}
+  - {bone: hat, from: [-7, 41, 4], size: [14, 1, 0], color: night_bark, paint: true}
+  - {bone: hat, from: [-5, 43, -10], size: [2, 2, 0], color: spore_glow, paint: true}
+  - {bone: hat, from: [3, 43, -10], size: [2, 1, 0], color: spore_glow, paint: true}
+  - {bone: hat, from: [-1, 42, -10], size: [1, 1, 0], color: spore_glow, paint: true}
+  - {bone: hat, from: [-3, 46, -7], size: [1, 2, 0], color: spore_glow, paint: true}
+  - {bone: hat, from: [2, 47, -7], size: [2, 1, 0], color: spore_glow, paint: true}
+  - {bone: hat, from: [7, 43, -6], size: [0, 2, 2], color: spore_glow, paint: true}
+  - {bone: hat, from: [7, 42, 0], size: [0, 1, 2], color: spore_glow, paint: true}
+  - {bone: hat, from: [5, 46, -3], size: [0, 2, 1], color: spore_glow, paint: true}
+  - {bone: hat, from: [5, 47, 1], size: [0, 1, 1], color: spore_glow, paint: true}
+  - {bone: hat, from: [-4, 43, 4], size: [2, 2, 0], color: spore_glow, paint: true}
+  - {bone: hat, from: [3, 42, 4], size: [1, 1, 0], color: spore_glow, paint: true}
+  - {bone: hat, from: [0, 46, 3], size: [2, 1, 0], color: spore_glow, paint: true}
+
+  # --- hat_tip: bends back and droops, with a glowing bud at its end (her lure)
+  - {bone: hat_tip, from: [-3, 49, -3], size: [6, 3, 6], color: cap}
+  - {bone: hat_tip, from: [-2, 48, 3], size: [4, 3, 4], color: cap}
+  - {bone: hat_tip, from: [-1, 45, 6], size: [3, 4, 3], color: cap_light}
+  - {bone: hat_tip, from: [-1, 43, 7], size: [2, 2, 2], color: spore_glow}
+  - {bone: hat_tip, from: [0, 50, -3], size: [1, 1, 0], color: spore_glow, paint: true}
+  - {bone: hat_tip, from: [3, 50, 0], size: [0, 1, 1], color: spore_glow, paint: true}
+
+  # --- arm_r: reaches out to the side and holds the staff outside the brim
+  - {bone: arm_r, from: [5, 24, -3], size: [3, 8, 3], color: bark}
+  - {bone: arm_r, from: [8, 23, -4], size: [5, 3, 3], color: bark}
+  - {bone: arm_r, from: [12, 22, -5], size: [3, 4, 4], color: root}
+
+  # --- staff: a root with a crook; a lantern mushroom hangs from it (amber: where spells come from)
+  - {bone: staff, from: [13, 0, -4], size: [2, 46, 2], color: root}
+  - {bone: staff, from: [13, 46, -8], size: [2, 2, 6], color: root}
+  - {bone: staff, from: [13, 44, -8], size: [2, 2, 2], color: root}
+  - {bone: staff, from: [13, 12, -4], size: [2, 1, 0], color: night_bark, paint: true}
+  - {bone: staff, from: [13, 30, -4], size: [2, 1, 0], color: night_bark, paint: true}
+  - {bone: staff, from: [15, 12, -4], size: [0, 1, 2], color: night_bark, paint: true}
+  - {bone: staff, from: [15, 30, -4], size: [0, 1, 2], color: night_bark, paint: true}
+  - {bone: lantern, from: [12, 42, -9], size: [4, 2, 4], color: cap_light}
+  - {bone: lantern, from: [13, 40, -8], size: [2, 2, 2], color: eye_amber}
+
+  # --- arm_l: long, hangs to the knee, claw hand
+  - {bone: arm_l, from: [-8, 16, -3], size: [3, 16, 3], color: bark}
+  - {bone: arm_l, from: [-8, 13, -3], size: [3, 3, 3], color: root}
+
+  # --- flask: the potion at her belt (lifted to the mouth in drink_potion)
+  - {bone: flask, from: [-5, 15, -6], size: [3, 4, 2], color: potion_red}
+  - {bone: flask, from: [-4, 19, -6], size: [1, 1, 2], color: stem_shadow}
+  - {bone: flask, from: [-4, 20, -6], size: [1, 1, 2], color: root}
+  - {bone: flask, from: [-5, 17, -6], size: [1, 1, 0], color: glow_core, paint: true}

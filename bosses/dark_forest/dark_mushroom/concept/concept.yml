@@ -1,0 +1,54 @@
+# Dark Mushroom: concept as boxes, drawn by bosses/_tools/concept_sheet.py (format in its header).
+# Pixels (1/16 block). y up from the ground, it faces -z, its right side is +x.
+# `paint: true` = detail painted on the texture (not a cube). 10 cubes here; budget 40.
+parts:
+  # --- four stubby root legs
+  - {bone: leg_fr, from: [2, 0, -4], size: [2, 3, 2], color: stem_shadow}
+  - {bone: leg_fl, from: [-4, 0, -4], size: [2, 3, 2], color: stem_shadow}
+  - {bone: leg_br, from: [2, 0, 2], size: [2, 3, 2], color: stem_shadow}
+  - {bone: leg_bl, from: [-4, 0, 2], size: [2, 3, 2], color: stem_shadow}
+
+  # --- body: the pale stem, the throat inside the mouth gap, the hinge at the back
+  - {bone: body, from: [-4, 3, -4], size: [8, 5, 8], color: gill_pale}
+  - {bone: body, from: [-3, 8, -3], size: [6, 2, 5], color: maw_dark}
+  - {bone: body, from: [-3, 8, 2], size: [6, 2, 2], color: gill_pale}
+  - {bone: body, from: [-3, 3, -4], size: [1, 3, 0], color: stem_shadow, paint: true}
+  - {bone: body, from: [0, 3, -4], size: [1, 4, 0], color: stem_shadow, paint: true}
+  - {bone: body, from: [2, 3, -4], size: [1, 2, 0], color: stem_shadow, paint: true}
+  - {bone: body, from: [4, 3, -2], size: [0, 3, 1], color: stem_shadow, paint: true}
+  - {bone: body, from: [4, 3, 1], size: [0, 4, 1], color: stem_shadow, paint: true}
+  - {bone: body, from: [-2, 3, 4], size: [1, 4, 0], color: stem_shadow, paint: true}
+  - {bone: body, from: [1, 3, 4], size: [1, 3, 0], color: stem_shadow, paint: true}
+
+  # --- jaw: the lower lip with its teeth; the cap above is the upper jaw
+  - {bone: jaw, from: [-4, 8, -4], size: [8, 2, 1], color: maw_dark}
+  - {bone: jaw, from: [-3, 8, -4], size: [1, 1, 0], color: glow_core, paint: true}
+  - {bone: jaw, from: [0, 8, -4], size: [1, 1, 0], color: potion_red, paint: true}
+  - {bone: jaw, from: [-1, 8, -4], size: [1, 1, 0], color: potion_red, paint: true}
+  - {bone: jaw, from: [2, 8, -4], size: [1, 1, 0], color: glow_core, paint: true}
+  - {bone: jaw, from: [-4, 9, -4], size: [1, 1, 0], color: glow_core, paint: true}
+  - {bone: jaw, from: [-2, 9, -4], size: [1, 1, 0], color: glow_core, paint: true}
+  - {bone: jaw, from: [1, 9, -4], size: [1, 1, 0], color: glow_core, paint: true}
+  - {bone: jaw, from: [3, 9, -4], size: [1, 1, 0], color: glow_core, paint: true}
+  - {bone: jaw, from: [4, 9, -4], size: [0, 1, 1], color: glow_core, paint: true}
+
+  # --- head: the flat cap, a lid that opens at the front (hinge at the back)
+  - {bone: head, from: [-7, 10, -7], size: [14, 3, 14], color: cap_deep}
+  - {bone: head, from: [-5, 13, -5], size: [10, 1, 10], color: cap}
+  - {bone: head, from: [-7, 10, -7], size: [14, 1, 0], color: cap, paint: true}
+  - {bone: head, from: [7, 10, -7], size: [0, 1, 14], color: cap, paint: true}
+  - {bone: head, from: [-7, 10, 7], size: [14, 1, 0], color: cap, paint: true}
+  - {bone: head, from: [-5, 11, -7], size: [2, 2, 0], color: eye_amber, paint: true}
+  - {bone: head, from: [3, 11, -7], size: [2, 2, 0], color: eye_amber, paint: true}
+  - {bone: head, from: [-4, 11, -7], size: [1, 1, 0], color: maw_dark, paint: true}
+  - {bone: head, from: [3, 11, -7], size: [1, 1, 0], color: maw_dark, paint: true}
+  - {bone: head, from: [-1, 12, -7], size: [2, 1, 0], color: spore_glow, paint: true}
+  - {bone: head, from: [-3, 13, -5], size: [1, 1, 0], color: spore_glow, paint: true}
+  - {bone: head, from: [2, 13, -5], size: [2, 1, 0], color: spore_glow, paint: true}
+  - {bone: head, from: [7, 11, -6], size: [0, 2, 1], color: eye_amber, paint: true}
+  - {bone: head, from: [7, 11, -2], size: [0, 1, 2], color: spore_glow, paint: true}
+  - {bone: head, from: [7, 12, 3], size: [0, 1, 1], color: spore_glow, paint: true}
+  - {bone: head, from: [5, 13, 0], size: [0, 1, 2], color: spore_glow, paint: true}
+  - {bone: head, from: [-4, 11, 7], size: [2, 2, 0], color: spore_glow, paint: true}
+  - {bone: head, from: [2, 12, 7], size: [2, 1, 0], color: spore_glow, paint: true}
+  - {bone: head, from: [-1, 11, 7], size: [1, 1, 0], color: spore_glow, paint: true}

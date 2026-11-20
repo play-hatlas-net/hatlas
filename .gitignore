@@ -37,3 +37,5 @@ worldgen/.venv/
 
 # Boss pipeline: third-party reference images (mood only, OQ 122)
 bosses/**/refs/private/
+bosses/_tools/.venv/
+bosses/_tools/__pycache__/
