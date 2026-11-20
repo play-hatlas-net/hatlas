@@ -34,3 +34,6 @@ worldgen/template/
 worldgen/*.world
 worldgen/out/
 worldgen/.venv/
+
+# Boss pipeline: third-party reference images (mood only, OQ 122)
+bosses/**/refs/private/

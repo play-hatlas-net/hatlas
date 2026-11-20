@@ -17,7 +17,9 @@ the last gate, if any.
    `bosses/<dungeon>/style.md` (or write it if missing), `bosses/<dungeon>/<boss>/refs/` (look at every
    image) and the other bosses of the same dungeon (do not repeat their mechanic).
 2. **If `refs/` is empty, stop** and say so, unless the caller says the user agreed to start without refs.
-3. Write `boss.yml` (format of plan §4.1, rules of §4.2). Keep numbers in ticks; every name once.
+3. Write `boss.yml` (format of plan §4.1, rules of §4.2, phase mechanics of §4.5: protectors, heal
+   channel, side waves). Keep numbers in ticks; every name once. For each non-vanilla minion it summons,
+   also write the minion's own `bosses/<dungeon>/<minion>/boss.yml` (`kind: minion`) and concept sheet.
 4. Draw the concept sheet with a Python script (Pillow) into `concept/`: front, side, back at 1 px =
    1/16 block, palette of `style.md` only, hitbox dashed, bone names beside. Put the script in
    `bosses/_tools/` if it is reusable.

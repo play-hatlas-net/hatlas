@@ -542,6 +542,14 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 115. **Mining landings**: one sector of the ring per entrance, the generator picks the spot; skinned entrance menu (destination, today's ore bonus, closing time) (recommended)? Amethyst region open to everyone (recommended) or a city reward?
 116. **Cave structures**: skill `cave-structures` + agent `structure-builder` with a user gate (recommended)? At launch: forest hollow, farming village, alchemist ruins, dwarven halls (recommended)? Amethyst geodes (a vanilla feature) allowed in the amethyst region (recommended)?
 
+**Round 24 (2026-11-20)**: boss **phase mechanics** (user): protector minions that must all die before the boss can be damaged, a heal channel stopped by damage (may start the next phase), optional side waves; minions are pipeline characters (`kind: minion`), the **Dark Mushroom** first, with the Fungal Witch; sound tools and music budget. Plan [`docs/cities-and-dungeons.md`](docs/cities-and-dungeons.md) §4.3–4.5.
+117. ~~**Protectors**~~ — ✔ answered 2026-11-20: as proposed (immune until all dead, 3 + 1 per player above 2, max 8, any death counts, lost ones respawn, enrage runs, Banish damages instead of removing).
+118. ~~**Heal channel**~~ — ✔ answered 2026-11-20: threshold **scaled by party**: 8 % + 2 % per player above 2, after the damage cap; 3 s stagger; never above the phase ceiling.
+119. ~~**Side waves**~~ — ✔ answered 2026-11-20: optional, mob cap, despawn at phase end, **no faction XP** and no drops.
+120. ~~**Minions in the pipeline**~~ — ✔ answered 2026-11-20: `kind: minion` (≤ 40 cubes, ≤ 64×64, 5 animations), Dark Mushroom made with the Fungal Witch.
+121. ~~**Sound tools**~~ — ✔ answered 2026-11-20: ElevenLabs Sound Effects (paid, API) for effects and voices, Suno Pro/Premier by the user for music; final boss one track per phase, mini-boss one, minions none.
+122. ~~**Reference images**~~ — ✔ answered 2026-11-20: third-party refs are mood only, kept in git-ignored `bosses/**/refs/private/`; the design stays our own.
+
 ## Changelog
 
 The changelog lives in [`docs/claude-changelog.md`](docs/claude-changelog.md). Read it at session start and append an entry (newest first) after every change.

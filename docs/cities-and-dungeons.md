@@ -318,10 +318,18 @@ size: {width: 1.4, height: 3.2} # hitbox in blocks
 stats: {hp: 600, armor: 8, damage_cap_per_hit: 12, enrage_seconds: 300}
 phases:                         # entered by HP threshold (and optional trigger)
   - {id: p1, hp_below: 1.0, moves: [slash, charge], idle: idle_calm}
-  - {id: p2, hp_below: 0.6, enter: roar_phase2, moves: [slash, charge, root_slam], idle: idle_angry}
+  - id: p2
+    hp_below: 0.6
+    enter: roar_phase2
+    moves: [slash, charge, root_slam, call_guards, mend]
+    idle: idle_angry
+    music: warden_music_p2      # optional, played while the phase lasts (§4.3, §4.5)
+    waves:                      # optional side waves, NOT needed to damage the boss (§4.5)
+      - {mobs: {cave_spider: 2, dark_mushroom: 1}, every_ticks: 300, max_alive: 6, until: phase_end}
   - {id: p3, hp_below: 0.25, enter: roar_phase3, moves: [frenzy, root_slam], speed: 1.3}
 moves:
   slash:
+    kind: attack                # attack (default) | summon | heal
     windup_ticks: 14            # animation + sound tell the player
     active_ticks: 4
     recovery_ticks: 20          # punish window
@@ -331,13 +339,34 @@ moves:
     animation: attack_slash
     sounds: {windup: warden_slash_windup, hit: warden_slash_hit}
     particles: {windup: crit, hit: sweep_attack}
+  call_guards:                  # protector summon: the boss is immune until every guard is dead (§4.5)
+    kind: summon
+    windup_ticks: 30
+    minion: dark_mushroom       # a spec of kind: minion (its own folder)
+    count: {base: 3, per_extra_player: 1, max: 8}   # extra = players above 2
+    protect: true               # false = plain adds
+    shield: {animation: spore_shield, tether_particles: spore_blossom_air, immune_sound: shield_hit}
+    uses_per_phase: 1
+    animation: summon
+    sounds: {windup: summon_cry}
+  mend:                         # heal channel, stopped by damage (§4.5)
+    kind: heal
+    windup_ticks: 10
+    channel_ticks: 160
+    heal_per_second: 0.02       # share of max HP
+    interrupt: {damage: 0.08, per_extra_player: 0.02, stagger_ticks: 60, goto_phase: p3}   # damage dealt during the channel, share of max HP
+    cap: phase                  # never heals above the current phase's hp_below
+    uses_per_phase: 2
+    animation: drink_potion
+    sounds: {windup: uncork, loop: drinking, interrupt: glass_break}
 reactions:                      # what the player does → what the boss does
   - {when: player_blocks_3_times, do: guard_break}
   - {when: players_far, ticks: 100, do: charge}
   - {when: healed_nearby, do: target_healer}
 defences: [{id: bark_shield, hp_below: 0.6, absorbs: 80, animation: shield_up}]
 animations: [idle_calm, idle_angry, walk, run, jump, attack_slash, charge, root_slam, frenzy,
-             shield_up, block, hit, roar_phase2, roar_phase3, death]
+             shield_up, block, hit, roar_phase2, roar_phase3, summon, spore_shield, drink_potion,
+             stagger, death]
 ```
 Every animation and sound name is written **once** in the spec; the model, the animator, the code and
 the sound step reuse those names (the validator fails on any name missing on one side).
@@ -393,8 +422,8 @@ BetterModel is checked in the pilot.
      sells tickets); the plan and date of generation are written in `sounds/LICENSES.md`, with the prompt
      used, so a sound can be regenerated in the same style;
   2. **vanilla sounds** layered and pitch-shifted from code only as filler (footsteps, small impacts);
-  3. **one music loop per final boss** (AI generated too, same licence rule), restarted from code
-     (Minecraft has no seamless loop).
+  3. **music during the fight** (AI generated too, same licence rule), restarted from code (Minecraft
+     has no seamless loop); round 24: **per phase** (`phases[].music`) within the pack-size budget below.
 - The `boss-sound` agent writes the prompts from `boss.yml` and the dungeon's `style.md` (one sound
   palette per dungeon), generates several takes, then trims, normalizes and converts them.
 - Each sound's source and licence is written in `sounds/LICENSES.md`.
@@ -402,12 +431,76 @@ BetterModel is checked in the pilot.
 - **Claude cannot hear audio:** it trims, normalizes loudness (ffmpeg `loudnorm`), converts and wires the
   files; the user judges them at the sound gate.
 
+**Sound tools (✔ round 24, user 2026-11-20, OQ 121):**
+- **Effects** (swings, impacts, summon cries, voices): **ElevenLabs Sound Effects** on a **paid** plan
+  (free = non-commercial). It has an API, so the `boss-sound` agent can generate the takes itself with
+  the user's key.
+- **Phase music**: **Suno Pro or Premier** (free = non-commercial), made **by the user on the website**
+  (no official public API; unofficial API wrappers are not used). Commercial rights cover only songs
+  made while subscribed, and the terms of 2026-09-03 tie commercial use to an approved download: keep
+  the download records with `LICENSES.md`. Instrumental only, prompts written by the agent.
+- Not used for music: **ElevenLabs Music** self-serve plans appear to exclude "Studio Games" (Enterprise
+  only), to check before any use. Licence wording changes often: **re-read each tool's current terms
+  before the first commercial take**, and note the date.
+- **Pack size:** a 2-minute stereo `.ogg` is ≈ 1.5–2 MB. Music per phase for 24 characters would add
+  ≈ 100–150 MB to a pack every player downloads. Budget: **final boss = one track per phase**,
+  **mini-boss = one track** (or none), minions none; loops of 60–90 s at ogg quality 3–4.
+- Music changes at a phase change: the old track stops, a short **stinger** (the phase-entry roar)
+  covers the cut, the new track starts (Minecraft cannot cross-fade).
+
 ### 4.4 Pilot (✔ user 2026-11-18, OQ 104)
 One **`dark_forest` mini-boss**, the **Fungal Witch** (✔ user): spore clouds (poison zones on the ground),
-summoned mushroom minions, teleports between trees. It goes through the whole pipeline, then into
+summoned mushroom minions, teleports between trees. ✔ Round 24 (user, 2026-11-20): its minion is the
+**Dark Mushroom** (a walking mushroom with a mouth under its cap, dark colours), summoned in a **summon
+phase** as **protectors** that must all die before the witch can be damaged (§4.5); the pilot also tries
+the **heal channel** (she drinks a potion) and **side waves**. The user's reference images are in
+`bosses/dark_forest/fungal_witch/refs/` (licence note: OQ 122). It goes through the whole pipeline, then into
 BetterModel on the test server, fought by bots. It answers: BetterModel per-bone hitboxes, cube budget,
 animation smoothness, Blockbench MCP usefulness, Fable vs Opus for the modeler, and the time per boss.
 Then the rest of `dark_forest` (2 mini-bosses + boss), then the other dungeons. It belongs to epic 2 (§9).
+
+### 4.5 Phase mechanics: protectors, heal channel, side waves (✔ round 24, user 2026-11-20, OQ 117–120)
+Any boss or mini-boss may use these three mechanics, declared in `boss.yml` (format §4.1). The Fungal
+Witch pilot uses all three.
+
+**1. Protector minions** (`kind: summon`, `protect: true`): the boss summons minions that **protect** it;
+it takes **no damage until every protector is dead**.
+- Readable: the boss shows a shield (`spore_shield` animation), particle **tethers** link each protector
+  to the boss, a hit on the shielded boss plays an "immune" sound and shows no damage number, the boss
+  bar says how many protectors are left.
+- Count scales with the party: `base + per_extra_player × (players − 2)`, capped at `max` (party ≤ 8).
+- A protector **counts as dead whatever kills it** (player, other mob, fire, void). One that unloads, gets
+  stuck or leaves the fight zone **respawns at its summon point**, so the shield can never stay up with no
+  protector to kill.
+- The boss keeps attacking during the shield; the **enrage timer keeps running** (no stalling).
+- Interaction with runes ([`runes.md`](runes.md)): **Banish** does not remove a protector (it would skip
+  the mechanic): it deals heavy damage to it instead (OQ 117). Area damage works normally.
+- Protectors give the usual mob faction XP and **no drops** (dungeon rule §7.3); they are not mini-bosses:
+  no rune soul, no loot roll.
+
+**2. Heal channel** (`kind: heal`): instead of attacking, the boss **heals itself** (the witch drinks a
+potion; other bosses absorb spores, eat, pray…) for `channel_ticks`, healing `heal_per_second`.
+- The party **stops it by dealing `interrupt.damage`** (share of max HP) during the channel, counted
+  **after** the damage cap per hit (one burst cannot do it alone). Interrupted → a **stagger**
+  (`stagger_ticks`, a punish window) and, if `goto_phase` is set, **the next phase starts** (the user's
+  "damage triggers the next phase").
+- The heal **never lifts HP above the current phase's ceiling** (`cap: phase`): phases never go back.
+- ✔ OQ 118: the threshold **grows with the party**: `interrupt.damage + 0.02 × (players − 2)` (8 players =
+  20 %), so a big party cannot stop it with one burst. The boss bar shows the channel and the damage still
+  needed.
+
+**3. Side waves** (`phases[].waves`): mobs that spawn during a phase **to make the fight harder**; they
+are **not needed** to damage the boss.
+- `every_ticks`, `max_alive` (lag cap, also counted in the fight zone's mob cap §7.3), `until:
+  phase_end | boss_death` (despawn then). ✔ OQ 119: **no faction XP and no drops** from wave mobs (the
+  fight cannot be farmed).
+- They are different from protectors: a wave mob never shields the boss, even when it is the same type
+  (the Dark Mushroom may appear in both; protectors carry the tether and a different name colour).
+
+**Minions are characters too** (`kind: minion`): own folder `bosses/<dungeon>/<minion>/`, own `boss.yml`
+(stats, moves, a few animations: `spawn`, `idle`, `walk`, `attack`, `death`), model, texture and sounds,
+made by the same pipeline with a smaller budget (≤ 40 cubes, texture ≤ 64×64, no music). The **Dark
+Mushroom** is the first one, made together with the Fungal Witch.
 
 ---
 
@@ -685,6 +778,9 @@ restarts on its own; its config stays small.
 - 100–104 ✔ (round 22, 2026-11-18): Fable 5.2 designer (+ modeler in the pilot), Opus 5.5 for the rest;
   Blockbench MCP for previews only; `boss.yml` draft approved; sounds **mostly AI generated** (commercial
   licence, prompts recorded); pilot = the **Fungal Witch** of `dark_forest`.
+- 117–122 ✔ (round 24, 2026-11-20): protectors as proposed; heal threshold +2 % per player above 2;
+  side waves give **no XP**, no drops; minions `kind: minion` (≤ 40 cubes, 64×64); ElevenLabs SFX + Suno
+  Pro/Premier, music budget as proposed; third-party refs mood only in git-ignored `refs/private/`.
 - 73–75 and 89–91: job questions, in [`job-skills.md`](job-skills.md) §8. 78–84 and 94–97: mining world, in
   [`mining-world.md`](mining-world.md) §10. 92–93: [`economy-observatory.md`](economy-observatory.md).
   98–99: [`cross-server-items.md`](cross-server-items.md).
