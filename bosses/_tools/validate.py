@@ -44,6 +44,10 @@ REQUIRED_SOUNDS = {"minion": ["hurt", "death"], "mini_boss": ["spawn", "hurt", "
 BUILTIN_ACTIONS = {"target_healer", "guard_break"}
 WAVE_UNTIL = {"phase_end", "boss_death"}
 ZONE_MIN, ZONE_MAX = 0.5, 2.0   # hit zone multipliers (plan §4.6)
+# hit-zone boxes (skill step 2, ✔ user 2026-11-21): a box players must hit (weak point or breakable part)
+# is at least ZONE_BOX_MIN px on every axis, and a weak point shows at least ZONE_WEAK_FACE x ZONE_WEAK_FACE px;
+# an armoured box holds at most ZONE_ARMOUR_AIR of air (else split the part into two boxes)
+ZONE_BOX_MIN, ZONE_WEAK_FACE, ZONE_ARMOUR_AIR, ZONE_BOXES_PER_BONE = 4, 6, 0.5, 2
 PROTECT_TIMEOUT_MAX = 2400      # ticks: a protector shield never lasts longer (plan §4.5)
 LATE_MUTATION_HP = 0.40         # every boss mutates at or below this share of HP, in one of its last two phases
 # vanilla mobs a summon or a wave may name without a spec of their own
@@ -763,7 +767,9 @@ def check_model(spec, boss_dir: Path, rep: Report, step: str):
                 "missing: " + ", ".join(miss) if miss else "")
         rep.add(g, "model.yml > hit_zone_boxes lists exactly the zones of boss.yml", set(zmap) == set(zones),
                 "zones: %s; mapped: %s" % (", ".join(sorted(zones)) or "none", ", ".join(sorted(zmap)) or "none"))
-        bad, uncovered, loose_fit, rows = [], [], [], []
+        bad, uncovered, loose_fit, rows, too_small, airy = [], [], [], [], [], []
+        held: dict[str, float] = {}
+        part_vol: dict[str, float] = {}
         for zid, zone in zones.items():
             want = match_bones(zone.get("bones"), names)
             have: dict[str, list] = {}
@@ -772,7 +778,7 @@ def check_model(spec, boss_dir: Path, rep: Report, step: str):
                     have.setdefault((v or {}).get("bone"), []).append(h)
             for b in sorted(want):
                 hs = have.get(b, [])
-                if len(hs) != 1:
+                if not 1 <= len(hs) <= ZONE_BOXES_PER_BONE:
                     uncovered.append(f"{zid}/{b}: {len(hs)} boxes")
             for b, hs in have.items():
                 if b not in want:
@@ -796,27 +802,51 @@ def check_model(spec, boss_dir: Path, rep: Report, step: str):
             if c.get("light_emission") or any(c.get("rotation") or []) or bones[h]["cubes"] != cs:
                 bad.append(f"{h}: emissive or rotated")
             part = bones.get(target, {}).get("cubes") or []
+            zone = zones.get(zid) or {}
+            mult = zone.get("multiplier") or 1
+            target_zone = mult > 1 or zone.get("break_hp") is not None    # players must reach it
+            dims = [c["to"][a] - c["from"][a] for a in range(3)]
+            if target_zone:
+                need = [ZONE_BOX_MIN] * 3
+                if mult > 1:
+                    for a in sorted(range(3), key=lambda a: -dims[a])[:2]:
+                        need[a] = ZONE_WEAK_FACE
+                if any(dims[a] < need[a] for a in range(3)):
+                    too_small.append("%s: %gx%gx%g px" % (h, *dims))
             if part:
                 lo = [min(q["from"][a] for q in part) for a in range(3)]
                 hi = [max(q["to"][a] for q in part) for a in range(3)]
-                inside = all(lo[a] - 1 <= c["from"][a] and c["to"][a] <= hi[a] + 1 for a in range(3))
+                # an axis grown to the minimum size may stick out further than 1 px
+                grown = [target_zone and hi[a] - lo[a] < dims[a] <= ZONE_WEAK_FACE for a in range(3)]
+                inside = all(grown[a] or (lo[a] - 1 <= c["from"][a] and c["to"][a] <= hi[a] + 1) for a in range(3))
                 vol = sum((q["to"][0] - q["from"][0]) * (q["to"][1] - q["from"][1]) * (q["to"][2] - q["from"][2]) for q in part)
                 got = sum(max(0, min(q["to"][0], c["to"][0]) - max(q["from"][0], c["from"][0]))
                           * max(0, min(q["to"][1], c["to"][1]) - max(q["from"][1], c["from"][1]))
                           * max(0, min(q["to"][2], c["to"][2]) - max(q["from"][2], c["from"][2])) for q in part)
-                if not inside or got < 0.6 * vol:
-                    loose_fit.append("%s: %s, holds %.0f %% of the part" % (h, "inside" if inside else "sticks out > 1 px", 100 * got / vol))
-                rows.append("%s (%s) on %s %gx%gx%g, %.0f %% of the part" % (
-                    h, zid, target, *(c["to"][a] - c["from"][a] for a in range(3)), 100 * got / vol))
+                held[target] = held.get(target, 0) + got
+                part_vol[target] = vol
+                if not inside:
+                    loose_fit.append("%s: sticks out > 1 px" % h)
+                air = 1 - got / (dims[0] * dims[1] * dims[2])
+                if mult < 1 and air > ZONE_ARMOUR_AIR:
+                    airy.append("%s: %.0f %% air" % (h, 100 * air))
+                rows.append("%s (%s) on %s %gx%gx%g, %.0f %% air" % (h, zid, target, *dims, 100 * air))
+        for b, got in held.items():
+            if got < 0.6 * part_vol[b]:
+                loose_fit.append("%s: boxes hold %.0f %% of the part" % (b, 100 * got / part_vol[b]))
         stray = sorted(set(zboxes) - set(mapped))
         tagged = sorted(h for h in zboxes if not h.startswith("zone_") or h.split("_")[0] in BETTERMODEL_TAGS)
-        rep.add(g, "one hit-zone box per bone of every zone (every zone covered)", not uncovered,
+        rep.add(g, f"1-{ZONE_BOXES_PER_BONE} hit-zone boxes per bone of every zone (every zone covered)", not uncovered,
                 "; ".join(uncovered) if uncovered else f"{len(mapped)} boxes for {len(zones)} zones")
         rep.add(g, "each box: helper bone `zone_...` under its bone, one cube, invisible, no textured face",
                 not bad and not stray and not tagged,
                 "; ".join(bad + [f"{h}: not in hit_zone_boxes" for h in stray] + tagged))
-        rep.add(g, "each box hugs its part (<= 1 px outside its cubes, holds >= 60 % of their volume)",
-                not loose_fit, "; ".join(loose_fit))
+        rep.add(g, "each box hugs its part (<= 1 px outside its cubes unless grown to the minimum; "
+                   "the boxes of a bone hold >= 60 % of its volume)", not loose_fit, "; ".join(loose_fit))
+        rep.add(g, f"weak and breakable boxes >= {ZONE_BOX_MIN} px on every axis, weak points show "
+                   f">= {ZONE_WEAK_FACE}x{ZONE_WEAK_FACE} px", not too_small, "; ".join(too_small))
+        rep.add(g, f"armoured boxes hold <= {ZONE_ARMOUR_AIR:.0%} air (they would steal hits from the body)",
+                not airy, "; ".join(airy))
         clash = []
         hs = [h for h in mapped if h in zboxes and len(zboxes[h][1]) == 1]
         for a_i, a in enumerate(hs):

@@ -127,15 +127,20 @@ paint:
 # hitboxes (HitBox.removeHitBox()) when it hides the bones: togglePart only hides what is drawn.
 hit_zone_boxes:
   eyes:
-    zone_eyes: {bone: eyes}                                   # the eye plate, 8 x 12 x 1
+    zone_eyes: {bone: eyes}                                   # eye plate 8 x 12 x 1, grown to 8 x 12 x 4 (minimum)
   sap_bulb:
-    # the sac only (not its stalk and vein): a weak point stays a little smaller than it looks
+    # the sac only (not its stalk and vein), grown to 6 x 6 x 5 (a weak point shows >= 6 x 6 px)
     zone_sap_bulb: {bone: bulb, from: [-10, 51, -21], to: [-5, 57, -16]}
   legs:
-    zone_legs_shin_fl: {bone: shin_fl}
-    zone_legs_shin_fr: {bone: shin_fr}
-    zone_legs_shin_bl: {bone: shin_bl}
-    zone_legs_shin_br: {bone: shin_br}
+    # armour: <= 50 % air, so each bent shin gets one box per straight segment (the knee falls to the body)
+    zone_legs_shin_fl_up:  {bone: shin_fl, from: [-13, 24, -12], to: [-10, 43, -9]}
+    zone_legs_shin_fl_low: {bone: shin_fl, from: [-14, 3, -14],  to: [-11, 24, -11]}
+    zone_legs_shin_fr_up:  {bone: shin_fr, from: [10, 24, -12],  to: [13, 43, -9]}
+    zone_legs_shin_fr_low: {bone: shin_fr, from: [11, 3, -14],   to: [14, 24, -11]}
+    zone_legs_shin_bl_up:  {bone: shin_bl, from: [-8, 22, 10],   to: [-4, 44, 14]}
+    zone_legs_shin_bl_low: {bone: shin_bl, from: [-8, 11, 8],    to: [-5, 23, 11]}
+    zone_legs_shin_br_up:  {bone: shin_br, from: [4, 22, 10],    to: [8, 44, 14]}
+    zone_legs_shin_br_low: {bone: shin_br, from: [5, 11, 8],     to: [8, 23, 11]}
     zone_legs_foot_fl: {bone: foot_fl}
     zone_legs_foot_fr: {bone: foot_fr}
     zone_legs_foot_bl: {bone: foot_bl}
@@ -144,7 +149,7 @@ hit_zone_boxes:
     zone_spit_root:  {bone: spit_root, removed_by: torn_spit_root}
     zone_spit_jaw_l: {bone: spit_jaw_l, removed_by: torn_spit_root}
     zone_spit_jaw_r: {bone: spit_jaw_r, removed_by: torn_spit_root}
-    zone_spit_pod:   {bone: spit_pod, removed_by: torn_spit_root}
+    zone_spit_pod:   {bone: spit_pod, removed_by: torn_spit_root}          # 3 x 3 x 3 pod, grown to 4 x 4 x 4
 
 # Preview only (render.py): rough poses that test the pivots. NOT animations, never written to the
 # .bbmodel. Rotation in degrees about the pivot of the bone, [x, y, z], right-handed about the model axes.

@@ -23,7 +23,7 @@ The boss folder `bosses/<dungeon>/<boss>/`, the iteration number, the user's rem
    size of the skill, palette only, `hitbox` bone = `boss.yml > size`.
    **Hit zones:** one invisible, untextured box per zone (per moving bone of the zone) covering the
    whole part, in a helper bone under the zone's bone, outside the cube budget, mapped in `model.yml >
-   hit_zone_boxes` (skill step 2, "Hit-zone boxes"). Never rely on a bone's largest visible cube.
+   hit_zone_boxes` (skill step 2, "Hit-zone boxes"). Never rely on a bone's largest visible cube. Weak and breakable boxes are ≥ 4 px on every axis (weak points ≥ 6 × 6 px seen); armoured boxes hold ≤ 50 % air (one box per straight segment, max 2 per bone).
 4. Render previews into `out/` (turntable 8 angles; front/side beside the concept sheet) with
    `bosses/_tools/render.py` (Pillow). If the Blockbench MCP tools are available, also screenshot it in
    Blockbench; use MCP only for previews and small edits.

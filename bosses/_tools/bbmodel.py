@@ -81,6 +81,10 @@ FACE_ORDER = ["north", "east", "south", "west", "up", "down"]
 EMISSIVE_SHARE = 0.4      # a cube is full bright when this share of its visible pixels is a glow colour
 
 
+# hit-zone boxes (skill step 2, ✔ user 2026-11-21): same values as validate.py
+ZONE_BOX_MIN, ZONE_WEAK_FACE, ZONE_BOXES_PER_BONE = 4, 6, 2
+
+
 def is_helper(bone: str) -> bool:
     """Bones that are not part of the drawn model: the main hitbox and the hit-zone boxes."""
     return bone == "hitbox" or bone.startswith("zone_")
@@ -217,6 +221,7 @@ def build(boss_dir: Path):
         raise ValueError("model.yml > hit_zone_boxes must list exactly the zones of boss.yml > hit_zones: "
                          f"{sorted(zones)} (got {sorted(zmap)})")
     helpers: dict[str, dict] = {}
+    per_bone: dict[str, int] = {}
     zone_rows = []
     for zid, zone in zones.items():
         want = match_bones(zone.get("bones"), set(bones))
@@ -225,12 +230,27 @@ def build(boss_dir: Path):
             target = h.get("bone")
             if not hname.startswith("zone_") or hname in bones or hname in helpers:
                 raise ValueError(f"hit_zone_boxes.{zid}.{hname}: helper bones are named zone_<...>, each once")
-            if target not in want or target in got:
-                raise ValueError(f"hit_zone_boxes.{zid}.{hname}: bone '{target}' is not a bone of this zone, or has two boxes")
+            if target not in want or per_bone.get(target, 0) >= ZONE_BOXES_PER_BONE:
+                raise ValueError(f"hit_zone_boxes.{zid}.{hname}: bone '{target}' is not a bone of this zone, "
+                                 f"or has more than {ZONE_BOXES_PER_BONE} boxes")
             got.add(target)
+            per_bone[target] = per_bone.get(target, 0) + 1
             cs = by_bone.get(target) or []
             lo = list(h.get("from") or [min(c["from"][a] for c in cs) for a in range(3)])
             hi = list(h.get("to") or [max(c["from"][a] + c["size"][a] for c in cs) for a in range(3)])
+            # a box players must hit grows to the minimum size (centred, whole pixels); a weak point
+            # also shows at least ZONE_WEAK_FACE px on its two largest axes
+            mult = zone.get("multiplier") or 1
+            if mult > 1 or zone.get("break_hp") is not None:
+                need = [ZONE_BOX_MIN] * 3
+                if mult > 1:
+                    for a in sorted(range(3), key=lambda a: lo[a] - hi[a])[:2]:
+                        need[a] = ZONE_WEAK_FACE
+                for a in range(3):
+                    d = need[a] - (hi[a] - lo[a])
+                    if d > 0:
+                        lo[a] -= d // 2
+                        hi[a] += d - d // 2
             hiders = sorted(m for m, mut in (spec.get("mutations") or {}).items()
                             if target in match_bones(mut.get("hide_bones"), set(bones)))
             if (h.get("removed_by") or None) != (hiders[0] if hiders else None):

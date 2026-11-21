@@ -161,8 +161,20 @@ blocks the gate.
     moving bone, all mapped to the same zone); no BetterModel tag prefix;
   - the box hugs the part's visible cubes (≤ 1 px margin) and never overlaps another zone's box: the
     smaller (weak) zone wins where they touch; weak points should stay a little smaller than they look;
-  - **zone boxes do not count in the cube budget** and are not painted; the validator checks one box
-    per zone bone, inside the main hitbox or touching the part, and no overlap between zones;
+  - **minimum size** (✔ user 2026-11-21) for a box players must hit (weak point, multiplier > 1, or a
+    breakable part with `break_hp`): **≥ 4 px (¼ block) on every axis**, and a weak point shows
+    **≥ 6 × 6 px** on its two largest axes. A thinner part (an eye plate, a pod) gets a box grown to the
+    minimum, centred, so it may stick out past the part (into the body behind is best). `bbmodel.py`
+    grows computed boxes by itself; a box given with `from`/`to` must already meet it. Armoured boxes
+    have no minimum (smaller armour only helps the player);
+  - **air inside a box counts as the part**: a ray through the box's empty corner hits the zone. For a
+    weak point that is a small, fair bonus; for **an armoured box it steals hits meant for the body**
+    (×0.5 instead of ×1.0, mostly against melee players standing at the legs). So an armoured box holds
+    **≤ 50 % air**; a bent part (a knee, an elbow) gets **one box per straight segment** (up to
+    **2 boxes per bone**) and the joint falls to the body hitbox. An armoured box never sits in front of
+    a weak point from the usual attack angles;
+  - **zone boxes do not count in the cube budget** and are not painted; the validator checks 1–2 boxes
+    per zone bone, the fit, the minimum size, the armour air and no overlap between zones;
   - the mapping zone → box bones is written in `model.yml` (`hit_zone_boxes`), read by the coder, who
     creates them with `EntityTracker.createHitBox(listener, BonePredicate.name(...))`;
   - the main `hitbox` bone stays the body hitbox (×1.0 default zone);
