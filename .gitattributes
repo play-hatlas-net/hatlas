@@ -13,3 +13,7 @@
 # Run on the Linux production server: always LF
 /scripts/backup/**  text eol=lf
 *.sh            text eol=lf
+
+# Boss models: hashed byte for byte (.bbmodel.sha detects hand edits), never convert line endings
+*.bbmodel -text
+*.bbmodel.sha -text
