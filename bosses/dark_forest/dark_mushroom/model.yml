@@ -1,0 +1,50 @@
+# Dark Mushroom: rig and texture options of the model (boss pipeline step 2, iteration 2, 2026-11-21).
+# Iteration 2: unchanged model (no hit zones in boss.yml, so no hit-zone boxes; eye plates kept).
+# Read by bosses/_tools/bbmodel.py (format in its header) together with concept/concept.yml. Run:
+#     bosses/_tools/.venv/Scripts/python bosses/_tools/bbmodel.py build bosses/dark_forest/dark_mushroom
+# Units: pixels (1/16 block), y up, it faces -z (north), its right side is +x.
+format_version: "4.10"
+texture: {width: 64, height: 64}
+gill_centre: [0, 0]
+
+bones:
+  root:   {pivot: [0, 0, 0]}
+  body:   {parent: root, pivot: [0, 3, 1]}        # foot of the stem (the stem and the black inside of the mouth)
+  head:   {parent: body, pivot: [0, 10, 4]}       # the cap hinges at the back of the stem top: it tips back to open the mouth
+  sprout: {parent: head, pivot: [1.5, 19, 1.5]}
+  jaw:    {parent: body, pivot: [0, 3, -2]}       # hinge at the back of the lip: the lip and the lower fangs drop
+  leg_fr: {parent: body, pivot: [4, 4, -1]}       # each rootlet turns on its knot at the stem
+  leg_fl: {parent: body, pivot: [-4, 4, -1]}
+  leg_br: {parent: body, pivot: [4, 4, 4]}
+  leg_bl: {parent: body, pivot: [-4, 4, 4]}
+
+# Texture details added at step 2 (the painted details of the concept are all kept).
+paint:
+  # fangs taper (design gate): two pixels wide at the gum (a dull shoulder beside the bright fang), one
+  # bright pixel from there to the tip. One side only, so black still shows between two fangs.
+  - {bone: jaw, from: [-4, 4, -8], size: [1, 1, 0], color: stem_pale}      # lower fangs (x -5, -1, 3)
+  - {bone: jaw, from: [0, 4, -8], size: [1, 1, 0], color: stem_pale}
+  - {bone: jaw, from: [4, 4, -8], size: [1, 1, 0], color: stem_pale}
+  - {bone: head, from: [-2, 8, -8], size: [1, 1, 0], color: stem_pale}     # upper fangs (x -3, 1)
+  - {bone: head, from: [2, 8, -8], size: [1, 1, 0], color: stem_pale}
+  # two small back teeth on the upper gum, so the row is crowded
+  - {bone: head, from: [4, 7, -8], size: [1, 2, 0], color: glow_core}
+  - {bone: head, from: [-5, 8, -8], size: [1, 1, 0], color: glow_core}
+  # the back of the mouth, seen when the jaw drops: a lavender tongue in the black
+  - {bone: body, from: [-2, 3, -7], size: [4, 2, 0], color: lilac_deep}
+  - {bone: body, from: [-1, 5, -7], size: [2, 1, 0], color: lilac_deep}
+  - {bone: body, from: [0, 4, -7], size: [1, 1, 0], color: lilac_glow}
+  # the floor of the mouth on top of the lip
+  - {bone: jaw, from: [-4, 3, -7], size: [8, 0, 4], color: lilac_deep}
+
+# Preview only (render.py): rough poses that test the pivots. NOT animations.
+pose_checks:
+  bite_windup:    # the cap tips back, the jaw drops until the fangs no longer cross
+    head: [28, 0, 0]
+    jaw: [-30, 0, 0]
+  rear:           # it rears on its back roots
+    body: [20, 0, 0]
+    leg_br: [-20, 0, 0]
+    leg_bl: [-20, 0, 0]
+    leg_fr: [-40, 0, 0]
+    leg_fl: [-40, 0, 0]

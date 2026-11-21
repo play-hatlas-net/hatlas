@@ -5,10 +5,11 @@ description: Builds a Hatlas dungeon boss or mini-boss end to end: references + 
 
 # Building a Hatlas boss
 
-> **Status: process defined 2026-11-18 (round 22, `docs/cities-and-dungeons.md` §4.1–4.4), tools not
-> built yet.** The scripts named below (`bosses/_tools/`) are **to be written** during the pilot (the
-> **Fungal Root**, `dark_forest`) by the agent of the step that first needs them, then reused. Until
-> then, follow this file as the plan.
+> **Status: process defined 2026-11-18 (round 22, `docs/cities-and-dungeons.md` §4.1–4.4).** The
+> scripts of `bosses/_tools/` are written during the pilot (the **Fungal Root**, `dark_forest`) by the
+> agent of the step that first needs them, then reused. **Built:** step 1 (`concept_build.py`,
+> `concept_sheet.py`, `validate.py --step design`) and step 2 (`bbmodel.py`, `texture.py`, `render.py`,
+> `validate.py --step model`, 2026-11-21). **To write:** animation previews and `sound.py`.
 
 Every boss is **made from files, not from chat**. Each step reads the files of the previous steps and
 writes its own; agents never pass results through the conversation. That keeps each step re-runnable,
@@ -35,9 +36,14 @@ reviewable, and checkable by someone who did not make it.
 bosses/
   _tools/                         scripts shared by every boss (committed)
     validate.py                   checks boss.yml + bbmodel + sounds against each other (§5)
-    bbmodel.py                    writes/reads .bbmodel JSON (cubes, bones, pivots, texture, keyframes)
+    bbmodel.py                    writes/reads .bbmodel JSON (cubes, bones, pivots, texture; keyframes: step 3).
+                                  `build <boss>`: concept.yml + model.yml -> .bbmodel + .sha; refuses a
+                                  hand-edited file. Format and BetterModel conventions in its header
     texture.py                    pixel-art texture from a palette + UV layout (Pillow)
-    render.mjs / preview.html     three.js preview of a .bbmodel (turntable PNGs, animation GIF/MP4)
+    render.py                     preview of a .bbmodel without Blockbench (Pillow software renderer, reads
+                                  only the file): turntable, model beside concept, from below, mutations,
+                                  pivot-check poses. Replaces the planned three.js render.mjs for stills;
+                                  animation GIFs (step 3) extend it
     sound.py                      trim, loudnorm, mono/stereo, ogg (ffmpeg), sounds.json entries
   <dungeon>/
     style.md                      style guide of the dungeon (committed, approved)
@@ -45,6 +51,8 @@ bosses/
       refs/                       user's images + README.md (committed)
       boss.yml                    spec (committed, approved)
       concept/                    concept sheet: front.png, side.png, back.png, palette.png (committed)
+      model.yml                   the rig of step 2 (committed): parent + pivot per bone, texture size,
+                                  extra painted details, emissive bones, pivot-check poses
       <boss>.bbmodel              the model (committed; after the user's polish, the user's file wins)
       <boss>.bbmodel.sha          hash of the last script-written version (committed)
       sounds/*.ogg                final sounds (committed)
@@ -139,7 +147,27 @@ blocks the gate.
   mini-boss ≤ 120, boss ≤ 250, to confirm in the pilot), one texture (minion ≤ 64×64, mini-boss
   ≤ 128×128, boss ≤ 256×256) painted with
   `_tools/texture.py` from the palette.
-- Hitbox = `boss.yml > size`, drawn as a `hitbox` bone (BetterModel's convention, checked in the pilot).
+- Hitbox = `boss.yml > size`, drawn as a `hitbox` bone (BetterModel 3.7.1 creates its hitbox from a
+  bone named `hitbox` or tagged `b_`/`ob_`; a bone's box is **its largest cube**). Bone names are the
+  spec's, never with a BetterModel tag prefix (`h_`, `b_`, `p_`, `glow` ... would be parsed and renamed);
+  hit-zone bones get their hitbox from the code (`EntityTracker.createHitBox(listener, BonePredicate)`).
+  Bones shown only by a mutation are written with `visibility: false` (shown at runtime with
+  `TrackerUpdateAction.togglePart`). Emissive cubes: `light_emission: 15` + a name ending in `_glow`.
+- **Hit-zone boxes** (✔ user 2026-11-21, plan §4.6): because a bone's hitbox is only its largest cube,
+  **every hit zone gets one invisible box that covers the whole part**, never a visible cube:
+  - one helper bone per zone, child of the zone's main bone (so it follows the animations), holding
+    **one untextured cube** with `visibility: false`, named after the zone (e.g. `zone_eyes`,
+    `zone_sap_bulb`, `zone_legs_fl`…; a zone over several moving bones, like four legs, gets one box per
+    moving bone, all mapped to the same zone); no BetterModel tag prefix;
+  - the box hugs the part's visible cubes (≤ 1 px margin) and never overlaps another zone's box: the
+    smaller (weak) zone wins where they touch; weak points should stay a little smaller than they look;
+  - **zone boxes do not count in the cube budget** and are not painted; the validator checks one box
+    per zone bone, inside the main hitbox or touching the part, and no overlap between zones;
+  - the mapping zone → box bones is written in `model.yml` (`hit_zone_boxes`), read by the coder, who
+    creates them with `EntityTracker.createHitBox(listener, BonePredicate.name(...))`;
+  - the main `hitbox` bone stays the body hitbox (×1.0 default zone);
+  - fallback if the pilot shows BetterModel zone hitboxes do not work: a ray test from the player's eye
+    (or the projectile path) against the same boxes, so the boxes are useful either way.
 - Previews: turntable (8 angles) + front/side next to the concept sheet, so the gate compares them.
 - Blockbench MCP (if installed): only to screenshot the model as Blockbench shows it and to apply small
   edits while the user watches; the file stays the source of truth.
@@ -149,7 +177,7 @@ blocks the gate.
   `windup + active + recovery` ticks (÷ 20 = seconds), with the wind-up pose readable from 10 blocks
   away. Loops: `idle_*`, `walk`, `run`. One-shots: everything else.
 - Keyframes on bones only (no scale on the root), easing kept simple; no clipping through the body.
-- Previews: one GIF/MP4 per animation from `_tools/render.mjs`.
+- Previews: one GIF/MP4 per animation (extend `_tools/render.py`, which already poses bones).
 
 ### Step 4: `boss-sound` (✔ OQ 103: mostly AI generated; tools: plan §4.3, OQ 121)
 - Effects and voices: ElevenLabs Sound Effects (paid plan, API, the agent may generate). Music: Suno

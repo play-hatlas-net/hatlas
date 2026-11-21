@@ -21,8 +21,11 @@ The boss folder `bosses/<dungeon>/<boss>/`, the iteration number, the user's rem
    format version pinned and recorded) and the texture with `bosses/_tools/texture.py`: bones from the
    fixed list + `boss.yml > bones`, pivots at the joints, cubes on the 1/16 grid, cube budget and texture
    size of the skill, palette only, `hitbox` bone = `boss.yml > size`.
+   **Hit zones:** one invisible, untextured box per zone (per moving bone of the zone) covering the
+   whole part, in a helper bone under the zone's bone, outside the cube budget, mapped in `model.yml >
+   hit_zone_boxes` (skill step 2, "Hit-zone boxes"). Never rely on a bone's largest visible cube.
 4. Render previews into `out/` (turntable 8 angles; front/side beside the concept sheet) with
-   `bosses/_tools/render.mjs`. If the Blockbench MCP tools are available, also screenshot it in
+   `bosses/_tools/render.py` (Pillow). If the Blockbench MCP tools are available, also screenshot it in
    Blockbench; use MCP only for previews and small edits.
 5. Write the new hash to `<boss>.bbmodel.sha`. Run `validate.py --step model` → `reports/model-<n>.md`.
 

@@ -1,0 +1,176 @@
+# Fungal Root: rig and texture options of the model (boss pipeline step 2, iteration 2, 2026-11-21).
+# Iteration 2 (user gate): hit-zone boxes, real tooth rows on the lower lash jaw (120 cubes of 120),
+# `bulb` under `chest`.
+# Read by bosses/_tools/bbmodel.py (format in its header) together with concept/concept.yml (the cubes
+# and painted details approved at the design gate). Run:
+#     bosses/_tools/.venv/Scripts/python bosses/_tools/bbmodel.py build bosses/dark_forest/fungal_root
+# Units: pixels (1/16 block), y up, it faces -z (north), its right side is +x.
+format_version: "4.10"
+texture: {width: 128, height: 128}
+gill_centre: [0, -9]                       # the gill stripes run away from the centre of the cap
+# Weak points glow (style.md §2): every cube of these bones is full bright, not only its glow pixels.
+emissive_bones: [eyes, bulb, spit_pod]
+# The stepped cap is 8 overlapping boxes: their cap_deep tops are rings of one flat colour (no flecks), so
+# they cost no texture space (5,100 px otherwise: the texture would not fit 128 x 128). The two top steps
+# (colour `cap`) keep their detail and get the spots below.
+plain: {head: ["up:cap_deep"]}
+
+# Bones: parent and pivot (the joint the bone turns on). Names = boss.yml (fixed: root, body, head).
+# The whole creature hangs from `hip` (the root mass): rearing, buckling and folding are poses of hip.
+bones:
+  root:        {pivot: [0, 0, 0]}
+  hip:         {parent: root, pivot: [0, 34, 2]}            # centre of the root mass: rear (cast_rain, phase3_enter), buckle (stagger)
+  body:        {parent: hip, pivot: [0, 37, 1]}             # foot of the lower trunk
+  chest:       {parent: body, pivot: [0, 48, -1]}           # the bend of the trunk: straightens (cast_cloud), bows (drink_sap)
+  eyes:        {parent: chest, pivot: [0, 53, -8]}          # static hit-zone plate: NEVER keyframed
+  bulb:        {parent: chest, pivot: [-4, 53.5, -6.5]}     # where its sap vein enters the trunk (user, iteration 2): the vein stays
+                                                            # attached when the cap tilts; the sac swings and swells (scale) from there
+  neck:        {parent: chest, pivot: [0, 58, -9]}
+  head:        {parent: neck, pivot: [0, 62, -9]}           # the cap on top of the neck: tips up, slams forward, shakes
+  cap_sprouts: {parent: head, pivot: [0, 75, -6]}
+  tendrils_f:  {parent: head, pivot: [0, 60, -25]}          # each curtain swings from the brim edge it hangs from
+  tendrils_b:  {parent: head, pivot: [0, 63, 8]}
+  tendrils_l:  {parent: head, pivot: [-17, 63, -7]}
+  tendrils_r:  {parent: head, pivot: [17, 63, -11]}
+  # legs: thigh on the root mass, shin on the knee knot, foot on the ankle
+  leg_fr:      {parent: hip, pivot: [6, 36, -5]}
+  shin_fr:     {parent: leg_fr, pivot: [10, 45, -9]}
+  foot_fr:     {parent: shin_fr, pivot: [12.5, 3, -12.5]}
+  leg_fl:      {parent: hip, pivot: [-6, 36, -5]}
+  shin_fl:     {parent: leg_fl, pivot: [-10, 45, -9]}
+  foot_fl:     {parent: shin_fl, pivot: [-12.5, 3, -12.5]}
+  leg_br:      {parent: hip, pivot: [5, 34, 7]}
+  shin_br:     {parent: leg_br, pivot: [6, 42, 12]}
+  foot_br:     {parent: shin_br, pivot: [6.5, 12, 10.5]}    # the hock end: the foot hinges under the bent shin
+  leg_bl:      {parent: hip, pivot: [-5, 34, 7]}
+  shin_bl:     {parent: leg_bl, pivot: [-6, 42, 12]}
+  foot_bl:     {parent: shin_bl, pivot: [-6.5, 12, 10.5]}
+  # lash root (right, front): shoulder knot on the root mass, whip knot, wrist of the jaw, jaw hinge
+  lash_base:   {parent: hip, pivot: [6, 32, -1]}
+  lash_mid:    {parent: lash_base, pivot: [16.5, 49.5, -4.5]}
+  maw:         {parent: lash_mid, pivot: [16.5, 40, -17.5]}
+  jaw:         {parent: maw, pivot: [16, 31, -18]}          # hinge at the back of the mouth: the long jaw drops
+  # spit root (right, back)
+  spit_base:   {parent: hip, pivot: [6, 33, 4]}
+  spit_root:   {parent: spit_base, pivot: [21, 32, 8]}      # the knot it bends on: leans back, whips forward, tears off here
+  spit_jaw_l:  {parent: spit_root, pivot: [19, 61, 7.5]}    # each half hinges at its foot and peels sideways
+  spit_jaw_r:  {parent: spit_root, pivot: [26, 61, 7.5]}
+  spit_pod:    {parent: spit_root, pivot: [22.5, 64.5, 7.5]}   # its centre: flares (scale)
+  spit_stump:  {parent: spit_base, pivot: [20, 30, 7.5]}    # hidden until the mutation torn_spit_root
+
+# Cubes added at step 2 (120 of 120). Outline differences from the concept are allowed only where these
+# cubes are (validate.py).
+cubes:
+  # the short middle fang of the lower lash jaw: the concept draws it as a pixel floating in front of the
+  # mouth (a decal with no face behind it), so it needs a cube to exist
+  - {bone: jaw, from: [16, 31, -28], size: [1, 1, 1], color: glow_core}
+  # the side tooth rows of the lower jaw (user, iteration 2): two black plates standing on the edges of the
+  # jaw, 1 px outside the throat, with the teeth painted on both faces. They drop with the jaw. (In
+  # iteration 1 these teeth were painted on the throat of `maw` and stayed up when the jaw opened.)
+  - {bone: jaw, from: [19, 31, -25], size: [1, 2, 7], color: void_dark}
+  - {bone: jaw, from: [12, 31, -25], size: [1, 2, 7], color: void_dark}
+
+# Texture details added at step 2 (the painted details of the concept are all kept).
+paint:
+  # the top of the long lower jaw is the floor of the mouth: gums around a black tongue bed (seen when it gapes)
+  - {bone: jaw, from: [13, 31, -28], size: [6, 0, 10], color: lilac_deep}
+  - {bone: jaw, from: [14, 31, -27], size: [4, 0, 8], color: void_dark}
+  - {bone: jaw, from: [15, 31, -24], size: [2, 0, 4], color: lilac_deep}      # tongue
+  - {bone: jaw, from: [16, 31, -23], size: [1, 0, 1], color: lilac_glow}
+  # outer faces of the two tooth rows (the concept's own decals paint their inner faces)
+  - {bone: jaw, from: [20, 31, -24], size: [0, 2, 1], color: glow_core}
+  - {bone: jaw, from: [20, 31, -22], size: [0, 1, 1], color: glow_core}
+  - {bone: jaw, from: [20, 31, -19], size: [0, 2, 1], color: glow_core}
+  - {bone: jaw, from: [12, 31, -24], size: [0, 2, 1], color: glow_core}
+  - {bone: jaw, from: [12, 31, -22], size: [0, 1, 1], color: glow_core}
+  - {bone: jaw, from: [12, 31, -19], size: [0, 2, 1], color: glow_core}
+  # inner faces of the two halves of the spit root: gums, a black gullet, teeth of different lengths
+  - {bone: spit_jaw_l, from: [20, 61, 5], size: [0, 11, 5], color: lilac_deep}
+  - {bone: spit_jaw_l, from: [20, 62, 6], size: [0, 9, 3], color: void_dark}
+  - {bone: spit_jaw_l, from: [20, 63, 6], size: [0, 2, 1], color: glow_core}
+  - {bone: spit_jaw_l, from: [20, 66, 8], size: [0, 1, 1], color: glow_core}
+  - {bone: spit_jaw_l, from: [20, 69, 7], size: [0, 2, 1], color: glow_core}
+  - {bone: spit_jaw_r, from: [25, 61, 5], size: [0, 8, 5], color: lilac_deep}
+  - {bone: spit_jaw_r, from: [25, 62, 6], size: [0, 6, 3], color: void_dark}
+  - {bone: spit_jaw_r, from: [25, 64, 6], size: [0, 1, 1], color: glow_core}
+  - {bone: spit_jaw_r, from: [25, 66, 8], size: [0, 2, 1], color: glow_core}
+  - {bone: spit_jaw_r, from: [27, 69, 5], size: [0, 3, 5], color: lilac_deep}
+  - {bone: spit_jaw_r, from: [27, 70, 7], size: [0, 2, 1], color: glow_core}
+  # bark peeled off the lash root, sap under it
+  - {bone: lash_base, from: [17, 42, -5], size: [1, 4, 0], color: stem_pale}
+  - {bone: lash_base, from: [17, 41, -5], size: [1, 1, 0], color: lilac_deep}
+  - {bone: lash_mid, from: [15, 49, -13], size: [0, 1, 3], color: stem_pale}
+  - {bone: lash_mid, from: [15, 48, -12], size: [0, 1, 1], color: lilac_deep}
+  # glowing spots on the two top steps of the cap, seen from above (cyan and lavender, style.md)
+  - {bone: head, from: [-3, 75, -10], size: [2, 0, 2], color: cyan_glow}
+  - {bone: head, from: [2, 75, -6], size: [2, 0, 1], color: lilac_glow}
+  - {bone: head, from: [-5, 75, -3], size: [1, 0, 1], color: cyan_glow}
+  - {bone: head, from: [4, 75, -11], size: [1, 0, 1], color: cyan_glow}
+  - {bone: head, from: [8, 73, -15], size: [2, 0, 2], color: cyan_glow}
+  - {bone: head, from: [-10, 73, -8], size: [1, 0, 2], color: lilac_glow}
+  - {bone: head, from: [9, 73, -2], size: [1, 0, 1], color: cyan_glow}
+  - {bone: head, from: [-9, 73, 1], size: [2, 0, 1], color: cyan_glow}
+  - {bone: head, from: [0, 73, -17], size: [1, 0, 1], color: lilac_glow}
+  - {bone: head, from: [3, 73, 2], size: [2, 0, 1], color: lilac_glow}
+  # the torn end of the stump (seen from above after the mutation)
+  - {bone: spit_stump, from: [18, 35, 5], size: [4, 0, 5], color: stem_pale}
+  - {bone: spit_stump, from: [19, 35, 7], size: [2, 0, 2], color: lilac_deep}
+  - {bone: spit_stump, from: [20, 35, 7], size: [1, 0, 1], color: lilac_glow}
+
+# Hit-zone boxes (skill step 2, plan §4.6): zone of boss.yml > hit_zones -> helper bones. Each helper is
+# a child of the bone it covers (it follows that bone's animation) and holds one invisible, untextured
+# cube: the box around the cubes of that bone, unless `from`/`to` are given. They are not cubes of the
+# budget. For the coder: create each with EntityTracker.createHitBox(listener,
+# BonePredicate.name("<helper>")); a hit on a helper = a hit on its zone (this table). Zone boxes are
+# checked before the main `hitbox` bone (default zone x1.0).
+# `removed_by`: the mutation that hides the covered bone. At that mutation the code must remove these
+# hitboxes (HitBox.removeHitBox()) when it hides the bones: togglePart only hides what is drawn.
+hit_zone_boxes:
+  eyes:
+    zone_eyes: {bone: eyes}                                   # the eye plate, 8 x 12 x 1
+  sap_bulb:
+    # the sac only (not its stalk and vein): a weak point stays a little smaller than it looks
+    zone_sap_bulb: {bone: bulb, from: [-10, 51, -21], to: [-5, 57, -16]}
+  legs:
+    zone_legs_shin_fl: {bone: shin_fl}
+    zone_legs_shin_fr: {bone: shin_fr}
+    zone_legs_shin_bl: {bone: shin_bl}
+    zone_legs_shin_br: {bone: shin_br}
+    zone_legs_foot_fl: {bone: foot_fl}
+    zone_legs_foot_fr: {bone: foot_fr}
+    zone_legs_foot_bl: {bone: foot_bl}
+    zone_legs_foot_br: {bone: foot_br}
+  spit_root:
+    zone_spit_root:  {bone: spit_root, removed_by: torn_spit_root}
+    zone_spit_jaw_l: {bone: spit_jaw_l, removed_by: torn_spit_root}
+    zone_spit_jaw_r: {bone: spit_jaw_r, removed_by: torn_spit_root}
+    zone_spit_pod:   {bone: spit_pod, removed_by: torn_spit_root}
+
+# Preview only (render.py): rough poses that test the pivots. NOT animations, never written to the
+# .bbmodel. Rotation in degrees about the pivot of the bone, [x, y, z], right-handed about the model axes.
+pose_checks:
+  jaws_open:      # attack_lash / cast_cloud wind-ups: the lash jaw drops, the spit root peels open
+    jaw: [-35, 0, 0]
+    maw: [20, 0, 0]
+    spit_jaw_l: [0, 0, 30]
+    spit_jaw_r: [0, 0, -30]
+    spit_root: [15, 0, 0]
+  rear:           # cast_rain / phase3_enter: it rears on its back legs, the cap tips up
+    hip: [22, 0, 0]
+    leg_br: [-22, 0, 0]
+    leg_bl: [-22, 0, 0]
+    leg_fr: [-35, 0, 0]
+    leg_fl: [-35, 0, 0]
+    head: [18, 0, 0]
+  slam:           # cast_rain recovery / drink_sap: the trunk bows, the cap comes down in front
+    chest: [-40, 0, 0]
+    head: [-25, 0, 0]
+  fold:           # tree_step: legs and roots fold in under the cap
+    leg_fr: [0, 0, 40]
+    leg_fl: [0, 0, -40]
+    leg_br: [0, 0, 30]
+    leg_bl: [0, 0, -30]
+    shin_fr: [0, 0, 35]
+    shin_fl: [0, 0, -35]
+    lash_base: [0, 0, 30]
+    spit_root: [0, 0, 60]

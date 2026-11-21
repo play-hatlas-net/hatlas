@@ -6,7 +6,9 @@ Usage:
 Steps (each one also runs the checks of the steps before it):
     design     boss.yml format, names, mechanics (plan §4.1, §4.2, §4.5), hit zones and
                mutations (§4.6) + concept sheet                                              IMPLEMENTED
-    model      .bbmodel: bones, cube budget, 1/16 grid, texture, palette, hitbox             not yet
+    model      .bbmodel: format, bones, pivots, cube budget, 1/16 grid, texture, palette,
+               UVs, hitbox, hit-zone boxes (one invisible box per zone bone, no overlap
+               between zones), mutation bones, outline = concept                             IMPLEMENTED
     animation  one animation per spec name, length = windup + active + recovery              not yet
     sound      .ogg per sound name, mono/stereo, loudness, LICENSES.md                       not yet
 The parts marked "not yet" are written by the agent of the step that first needs them; until then
@@ -561,9 +563,344 @@ def check_concept(spec, boss_dir: Path, rep: Report):
                 f"hitbox {hh:g} px, drawn {top} px ({top / PX_PER_BLOCK:g} blocks), widest reach {reach} px")
 
 
+# ---------------------------------------------------------------------------------------- model
+def model_view(model, view, bounds):
+    """The model seen straight on (front / side / back) at 1 px = 1/16 block, from the .bbmodel alone:
+    same frame and same rule as the concept views (nearest face wins). Cubes are not rotated at rest."""
+    from PIL import Image
+
+    u_min, u_max, y_max = bounds
+    w, h = u_max - u_min, y_max
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = img.load()
+    tex = model.textures[0]
+    tpx = tex.load()
+    kx = tex.width / model.resolution.get("width", tex.width)
+    ky = tex.height / model.resolution.get("height", tex.height)
+    zbuf = {}
+    face = {"front": "north", "side": "east", "back": "south"}[view]
+    for bone, cube in model.cubes():
+        if not model.shown(bone) or cube.get("visibility", True) is False:
+            continue
+        f = (cube.get("faces") or {}).get(face) or {}
+        if f.get("texture") is None:
+            continue
+        (x0, y0, z0), (x1, y1, z1) = cube["from"], cube["to"]
+        if view == "front":
+            left, depth, fw = -x1, -z0, x1 - x0
+        elif view == "side":
+            left, depth, fw = -z1, x1, z1 - z0
+        else:
+            left, depth, fw = x0, z1, x1 - x0
+        fh = y1 - y0
+        u1, v1, u2, v2 = f["uv"]
+        for j in range(int(fh)):
+            for i in range(int(fw)):
+                sx, sy = int(left) + i - u_min, h - 1 - (int(y1) - 1 - j)
+                if not (0 <= sx < w and 0 <= sy < h) or depth < zbuf.get((sx, sy), -10**9):
+                    continue
+                c = tpx[min(int((u1 + (i + 0.5) / fw * (u2 - u1)) * kx), tex.width - 1),
+                        min(int((v1 + (j + 0.5) / fh * (v2 - v1)) * ky), tex.height - 1)]
+                if c[3]:
+                    zbuf[(sx, sy)] = depth
+                    px[sx, sy] = c
+    return img
+
+
+def check_model(spec, boss_dir: Path, rep: Report, step: str):
+    from bbmodel import BETTERMODEL_TAGS, FORMAT_VERSION, MODEL_FORMAT, Model, is_helper, sha256
+    from common import TEXTURE_BUDGET
+
+    g = "model"
+    mid = spec.get("id", boss_dir.name)
+    path = boss_dir / f"{mid}.bbmodel"
+    if not rep.add(g, f"{mid}.bbmodel exists", path.exists(), path.name):
+        return
+    try:
+        model = Model(path)
+    except Exception as e:  # noqa: BLE001
+        rep.add(g, ".bbmodel can be read (JSON, embedded texture)", False, f"{type(e).__name__}: {e}")
+        return
+    meta = model.meta
+    rep.add(g, f"Blockbench format pinned ({FORMAT_VERSION}, generic model, per-face UV)",
+            str(meta.get("format_version")) == FORMAT_VERSION and meta.get("model_format") == MODEL_FORMAT
+            and meta.get("box_uv") is False,
+            "format_version %s, model_format %s, box_uv %s" % (meta.get("format_version"), meta.get("model_format"), meta.get("box_uv")))
+    sha_path = path.with_name(path.name + ".sha")
+    scripted = sha_path.exists() and sha_path.read_text(encoding="utf-8").split()[0] == sha256(path)
+    if not sha_path.exists():
+        rep.add(g, f"{sha_path.name} exists", False, "the hash of the last script-written version is missing")
+    else:
+        rep.add(g, "hash file: who wrote the model last", "INFO",
+                "the script (sha256 matches)" if scripted else
+                "EDITED BY HAND since the last script write: hand edits win, never regenerate over it")
+
+    # ---- bones
+    bones = model.bones
+    names = {b for b in bones if not is_helper(b)}     # the drawn bones (no hitbox, no hit-zone box)
+    extras = set(spec.get("bones") or [])
+    rig_file = boss_dir / "model.yml"
+    rig = (load_yaml(rig_file) or {}) if rig_file.exists() else {}
+    tops = [b for b, v in bones.items() if v["parent"] is None]
+    rep.add(g, "one bone tree under `root`, every bone named once, no cube outside a bone",
+            tops == ["root"] and not model.duplicates and not model.loose,
+            "top: %s; twice: %s; loose cubes: %d" % (", ".join(tops), ", ".join(model.duplicates) or "none", len(model.loose)))
+    unknown = sorted(names - set(FIXED_BONES) - extras)
+    rep.add(g, "every bone is a fixed name or declared in boss.yml > bones", not unknown,
+            "unknown: " + ", ".join(unknown) if unknown else
+            f"{len(names)} bones + hitbox + {len(model.zone_boxes())} hit-zone boxes")
+    need = sorted(({"root", "body", "head"} | extras | concept_bones(boss_dir)) - names)
+    rep.add(g, "root, body, head, every declared bone and every concept bone exist", not need,
+            "missing: " + ", ".join(need) if need else "")
+    bad = sorted(b for b in bones if ("_" in b and b.split("_")[0] in BETTERMODEL_TAGS) or "glow" in b)
+    rep.add(g, "no bone name is read as a BetterModel tag (h_, b_, p_, glow ...)", not bad, ", ".join(bad))
+    empty = sorted(b for b in names - {"root"} if not bones[b]["cubes"])
+    rep.add(g, "every bone except root has cubes", not empty, "empty: " + ", ".join(empty) if empty else "")
+
+    # ---- cubes
+    cubes = model.cubes()
+    kind = spec.get("kind")
+    budget = CUBE_BUDGET.get(kind, 0)
+    cfile = boss_dir / "concept" / "concept.yml"
+    drawn = sum(1 for p in load_yaml(cfile)["parts"] if not p.get("paint")) if cfile.exists() else None
+    rep.add(g, f"cubes <= budget ({budget})", len(cubes) <= budget,
+            f"{len(cubes)} cubes (hitbox and hit-zone boxes not counted)" + (f"; concept: {drawn}" if drawn is not None else ""))
+    if drawn is not None and drawn != len(cubes):
+        rep.add(g, "cube count differs from the concept", "INFO",
+                f"{len(cubes) - drawn:+d} (cubes added or removed at step 2: named in the report of the step)")
+    off = [c["name"] for _, c in cubes if any(abs(v - round(v)) > 1e-6 for v in list(c["from"]) + list(c["to"]))
+           or any(c["to"][a] - c["from"][a] <= 0 for a in range(3))]
+    rep.add(g, "cubes on the 1/16 grid, three sizes > 0", not off, ", ".join(off[:8]))
+    turned = [c["name"] for _, c in cubes if any(c.get("rotation") or [])] + \
+             [b for b, v in bones.items() if any(v["rotation"] or [])]
+    rep.add(g, "no cube or bone rotated at rest", not turned, ", ".join(turned[:8]))
+    infl = [c["name"] for _, c in cubes if c.get("inflate")]
+    rep.add(g, "no inflated cube", not infl, ", ".join(infl[:8]))
+
+    # ---- pivots
+    far = []
+    for b in sorted(names - {"root"}):
+        cs = bones[b]["cubes"]
+        if not cs:
+            continue
+        pv = bones[b]["pivot"]
+        lo = [min(c["from"][a] for c in cs) - 1 for a in range(3)]
+        hi = [max(c["to"][a] for c in cs) + 1 for a in range(3)]
+        if not all(lo[a] <= pv[a] <= hi[a] for a in range(3)):
+            far.append("%s %s" % (b, pv))
+    rep.add(g, "every pivot lies on its bone (inside the box of its cubes, 1 px margin)", not far, "; ".join(far))
+    rep.add(g, "root pivot at the origin", list(bones.get("root", {}).get("pivot", [1])) == [0, 0, 0])
+
+    # ---- texture
+    tb = TEXTURE_BUDGET.get(kind, 0)
+    ok_tex = len(model.textures) == 1
+    rep.add(g, "one texture", ok_tex, f"{len(model.textures)}")
+    if ok_tex:
+        tex = model.textures[0]
+        res = (model.resolution.get("width"), model.resolution.get("height"))
+        rep.add(g, f"texture size <= {tb} x {tb}, = project resolution", tex.width <= tb and tex.height <= tb and res == tex.size,
+                f"{tex.width} x {tex.height}, resolution {res[0]} x {res[1]}")
+        style = boss_dir.parent / "style.md"
+        allowed = set(load_palette(style).values()) if style.exists() else set()
+        cols = tex.getcolors(1 << 20)
+        outside = sorted({c[:3] for _, c in cols if c[3] > 0 and c[:3] not in allowed})
+        half = sum(n for n, c in cols if 0 < c[3] < 255)
+        used = {c[:3] for _, c in cols if c[3] > 0}
+        rep.add(g, "texture uses the palette only", not outside,
+                "outside: " + ", ".join(hexa(c) for c in outside[:10]) if outside else f"{len(used)} palette colours, 0 outside style.md")
+        rep.add(g, "texture pixels are opaque or empty (no half transparency)", half == 0, f"{half} half-transparent px")
+        tpx = tex.load()
+        bad_uv, n_faces, blank = [], 0, 0
+        for _, c in cubes:
+            for fname, f in (c.get("faces") or {}).items():
+                if f.get("texture") is None:
+                    continue
+                n_faces += 1
+                u1, v1, u2, v2 = f["uv"]
+                if not (0 <= min(u1, u2) and max(u1, u2) <= res[0] and 0 <= min(v1, v2) and max(v1, v2) <= res[1]) \
+                        or u1 == u2 or v1 == v2 or f.get("texture") != 0:
+                    bad_uv.append(f"{c['name']}.{fname}")
+                    continue
+                for x in range(int(min(u1, u2)), int(max(u1, u2))):
+                    for y in range(int(min(v1, v2)), int(max(v1, v2))):
+                        if tpx[x, y][3] == 0:
+                            blank += 1
+        rep.add(g, "every textured face has a UV rectangle inside the texture, on painted pixels",
+                not bad_uv and blank == 0, f"{n_faces} textured faces" + (f"; bad: {', '.join(bad_uv[:6])}" if bad_uv else "")
+                + (f"; {blank} empty px sampled" if blank else ""))
+    glow_named = {c["name"] for _, c in cubes if "glow" in c["name"].lower()}
+    glow_lit = {c["name"] for _, c in cubes if c.get("light_emission")}
+    if scripted:
+        rep.add(g, "emissive cubes: `light_emission` 15 and a name with `glow` go together", glow_named == glow_lit,
+                f"{len(glow_lit)} emissive cubes" if glow_named == glow_lit else ", ".join(sorted(glow_named ^ glow_lit)[:8]))
+    else:
+        rep.add(g, "emissive cubes (name with `glow`, the BetterModel rule)", "INFO", f"{len(glow_named)}")
+
+    # ---- hitbox
+    size = spec.get("size") or {}
+    hb = bones.get("hitbox")
+    if rep.add(g, "`hitbox` bone under root with one cube", bool(hb) and hb["parent"] == "root" and len(hb["cubes"]) == 1):
+        c = hb["cubes"][0]
+        hw, hh = size["width"] * PX_PER_BLOCK / 2, size["height"] * PX_PER_BLOCK
+        want = ([-hw, 0, -hw], [hw, hh, hw])
+        got = (list(c["from"]), list(c["to"]))
+        rep.add(g, "hitbox cube = boss.yml > size, centred, on the ground",
+                all(abs(a - b) < 1e-6 for w_, g_ in zip(want, got) for a, b in zip(w_, g_)),
+                "%g x %g x %g px (size %g x %g blocks)" % (got[1][0] - got[0][0], got[1][1] - got[0][1], got[1][2] - got[0][2],
+                                                          size["width"], size["height"]))
+        rep.add(g, "hitbox cube is not drawn (no textured face)",
+                all(f.get("texture") is None for f in (c.get("faces") or {}).values()))
+
+    # ---- hit zones and mutations
+    zones = {k: v for k, v in (spec.get("hit_zones") or {}).items() if isinstance(v, dict)}
+    zmap = rig.get("hit_zone_boxes") or {}
+    zboxes = model.zone_boxes()
+    mapped = {h: (zid, v) for zid, hs in zmap.items() for h, v in (hs or {}).items()}
+    if zones or zboxes or zmap:
+        miss = [f"{zid}: {pat}" for zid, zone in zones.items() for pat in zone.get("bones") or []
+                if not match_bones([pat], names) or any(not bones[b]["cubes"] for b in match_bones([pat], names))]
+        rep.add(g, "every hit-zone bone exists as its own bone with cubes", not miss,
+                "missing: " + ", ".join(miss) if miss else "")
+        rep.add(g, "model.yml > hit_zone_boxes lists exactly the zones of boss.yml", set(zmap) == set(zones),
+                "zones: %s; mapped: %s" % (", ".join(sorted(zones)) or "none", ", ".join(sorted(zmap)) or "none"))
+        bad, uncovered, loose_fit, rows = [], [], [], []
+        for zid, zone in zones.items():
+            want = match_bones(zone.get("bones"), names)
+            have: dict[str, list] = {}
+            for h, (z, v) in mapped.items():
+                if z == zid:
+                    have.setdefault((v or {}).get("bone"), []).append(h)
+            for b in sorted(want):
+                hs = have.get(b, [])
+                if len(hs) != 1:
+                    uncovered.append(f"{zid}/{b}: {len(hs)} boxes")
+            for b, hs in have.items():
+                if b not in want:
+                    bad.append(f"{hs[0]}: '{b}' is not a bone of zone {zid}")
+        for h, (zid, v) in mapped.items():
+            if h not in zboxes:
+                bad.append(f"{h}: not in the model")
+                continue
+            parent, cs = zboxes[h]
+            target = (v or {}).get("bone")
+            if parent != target:
+                bad.append(f"{h}: child of {parent}, mapped to {target}")
+            if len(cs) != 1:
+                bad.append(f"{h}: {len(cs)} cubes")
+                continue
+            c = cs[0]
+            if any(f.get("texture") is not None for f in (c.get("faces") or {}).values()):
+                bad.append(f"{h}: has a textured face")
+            if c.get("visibility", True) is not False or bones[h]["visibility"]:
+                bad.append(f"{h}: visible")
+            if c.get("light_emission") or any(c.get("rotation") or []) or bones[h]["cubes"] != cs:
+                bad.append(f"{h}: emissive or rotated")
+            part = bones.get(target, {}).get("cubes") or []
+            if part:
+                lo = [min(q["from"][a] for q in part) for a in range(3)]
+                hi = [max(q["to"][a] for q in part) for a in range(3)]
+                inside = all(lo[a] - 1 <= c["from"][a] and c["to"][a] <= hi[a] + 1 for a in range(3))
+                vol = sum((q["to"][0] - q["from"][0]) * (q["to"][1] - q["from"][1]) * (q["to"][2] - q["from"][2]) for q in part)
+                got = sum(max(0, min(q["to"][0], c["to"][0]) - max(q["from"][0], c["from"][0]))
+                          * max(0, min(q["to"][1], c["to"][1]) - max(q["from"][1], c["from"][1]))
+                          * max(0, min(q["to"][2], c["to"][2]) - max(q["from"][2], c["from"][2])) for q in part)
+                if not inside or got < 0.6 * vol:
+                    loose_fit.append("%s: %s, holds %.0f %% of the part" % (h, "inside" if inside else "sticks out > 1 px", 100 * got / vol))
+                rows.append("%s (%s) on %s %gx%gx%g, %.0f %% of the part" % (
+                    h, zid, target, *(c["to"][a] - c["from"][a] for a in range(3)), 100 * got / vol))
+        stray = sorted(set(zboxes) - set(mapped))
+        tagged = sorted(h for h in zboxes if not h.startswith("zone_") or h.split("_")[0] in BETTERMODEL_TAGS)
+        rep.add(g, "one hit-zone box per bone of every zone (every zone covered)", not uncovered,
+                "; ".join(uncovered) if uncovered else f"{len(mapped)} boxes for {len(zones)} zones")
+        rep.add(g, "each box: helper bone `zone_...` under its bone, one cube, invisible, no textured face",
+                not bad and not stray and not tagged,
+                "; ".join(bad + [f"{h}: not in hit_zone_boxes" for h in stray] + tagged))
+        rep.add(g, "each box hugs its part (<= 1 px outside its cubes, holds >= 60 % of their volume)",
+                not loose_fit, "; ".join(loose_fit))
+        clash = []
+        hs = [h for h in mapped if h in zboxes and len(zboxes[h][1]) == 1]
+        for a_i, a in enumerate(hs):
+            for b in hs[a_i + 1:]:
+                if mapped[a][0] == mapped[b][0]:
+                    continue
+                ca, cb = zboxes[a][1][0], zboxes[b][1][0]
+                if all(min(ca["to"][k], cb["to"][k]) - max(ca["from"][k], cb["from"][k]) > 1e-6 for k in range(3)):
+                    clash.append(f"{a} x {b}")
+        rep.add(g, "no overlap between the boxes of two zones (at rest)", not clash, ", ".join(clash))
+        wrong_rm = []
+        for h, (zid, v) in mapped.items():
+            target = (v or {}).get("bone")
+            hiders = sorted(m for m, mut in (spec.get("mutations") or {}).items()
+                            if target in match_bones(mut.get("hide_bones"), names))
+            if ((v or {}).get("removed_by") or None) != (hiders[0] if hiders else None):
+                wrong_rm.append(f"{h}: removed_by should be {hiders[0] if hiders else 'absent'}")
+        rep.add(g, "boxes on bones hidden by a mutation are marked `removed_by` that mutation", not wrong_rm,
+                "; ".join(wrong_rm) if wrong_rm else ", ".join(sorted(h for h, (_, v) in mapped.items() if (v or {}).get("removed_by"))) or "none")
+        rep.add(g, "hit-zone boxes (not counted in the cube budget)", "INFO", "; ".join(rows))
+    hidden = hidden_bones(spec, names)
+    muts = spec.get("mutations") or {}
+    if muts:
+        miss = []
+        for mut_id, mut in muts.items():
+            for key in ("hide_bones", "show_bones"):
+                for pat in mut.get(key) or []:
+                    if not match_bones([pat], names):
+                        miss.append(f"{mut_id}.{key}: {pat}")
+        rep.add(g, "every bone hidden or shown by a mutation exists", not miss, ", ".join(miss))
+
+    def off_at_rest(b):
+        return not bones[b]["visibility"] and all(c.get("visibility", True) is False for c in bones[b]["cubes"])
+
+    wrong = sorted(b for b in hidden if b in bones and not off_at_rest(b))
+    wrong += sorted(b for b in names - hidden if not bones[b]["visibility"]
+                    or any(c.get("visibility", True) is False for c in bones[b]["cubes"]))
+    rep.add(g, "only the bones shown by a mutation are hidden at rest (visibility off)", not wrong,
+            "wrong: " + ", ".join(wrong) if wrong else "hidden: " + (", ".join(sorted(hidden)) or "none"))
+    if step == "model":
+        rep.add(g, "no animation yet (step 3 writes them)", not model.animations, f"{len(model.animations)} animations")
+
+    # ---- same outline as the approved concept
+    cdir = boss_dir / "concept"
+    if cfile.exists() and ok_tex and all((cdir / f"{v}_1x.png").exists() for v in ("front", "side", "back")):
+        from PIL import Image
+
+        added = rig.get("cubes") or []      # cubes added at step 2: the only place the outline may differ
+        diffs, same, total, outside_added, on_added = [], 0, 0, 0, 0
+        for v in ("front", "side", "back"):
+            ref = Image.open(cdir / f"{v}_1x.png").convert("RGBA")
+            w, h = ref.size
+            u_min = -(w // 2)
+            got = model_view(model, v, (u_min, w - w // 2, h))
+            allowed = set()
+            for q in added:
+                (x0, y0, z0), (sx_, sy_, sz_) = q["from"], q["size"]
+                left, span = {"front": (-(x0 + sx_), sx_), "side": (-(z0 + sz_), sz_), "back": (x0, sx_)}[v]
+                allowed |= {(left + i - u_min, h - 1 - y) for i in range(span) for y in range(y0, y0 + sy_)}
+            rp, gp = ref.load(), got.load()
+            d = da = 0
+            for y in range(h):
+                for x in range(w):
+                    a, b = rp[x, y], gp[x, y]
+                    if (a[3] > 0) != (b[3] > 0):
+                        if (x, y) in allowed:
+                            da += 1
+                        else:
+                            d += 1
+                    elif a[3] > 0:
+                        total += 1
+                        same += a[:3] == b[:3]
+            outside_added += d
+            on_added += da
+            diffs.append(f"{v} {d} px" + (f" (+{da} px on the added cubes)" if da else ""))
+        rep.add(g, "outline = concept in the front, side and back views (except on cubes added in model.yml)",
+                outside_added == 0 if scripted else "INFO", "differs by: " + ", ".join(diffs)
+                + ("" if scripted else " (hand-edited model: for information)"))
+        rep.add(g, "pixels of the same colour as the concept views", "INFO",
+                "%d of %d (%.0f %%); the rest is texture detail added at step 2" % (same, total, 100 * same / max(total, 1)))
+
+
 def not_yet(rep: Report, step: str, asked: bool):
-    what = {"model": "<boss>.bbmodel (bones, cube budget, grid, texture, palette, hitbox)",
-            "animation": "animations in the model (one per spec name, length = windup + active + recovery)",
+    what = {"animation": "animations in the model (one per spec name, length = windup + active + recovery)",
             "sound": "sounds/*.ogg (one per spec name, mono/stereo, loudness, LICENSES.md)"}[step]
     rep.add(step, what, "FAIL" if asked else "NOT YET",
             "validator part not written yet (written by the agent of this step, skill §5)")
@@ -609,11 +946,17 @@ def main() -> int:
             check_concept(spec, boss_dir, rep)
         except Exception as e:  # noqa: BLE001  a malformed spec must give a FAIL row, not a traceback
             rep.add("format", "spec can be checked to the end", False, f"{type(e).__name__}: {e}")
-    for step in STEPS[1:]:
-        if STEPS.index(step) <= STEPS.index(args.step):
-            not_yet(rep, step, asked=True)
-        else:
-            not_yet(rep, step, asked=False)
+    asked_model = STEPS.index(args.step) >= STEPS.index("model")
+    if asked_model and isinstance(spec, dict):
+        try:
+            check_model(spec, boss_dir, rep, args.step)
+        except Exception as e:  # noqa: BLE001  a broken model must give a FAIL row, not a traceback
+            rep.add("model", "model can be checked to the end", False, f"{type(e).__name__}: {e}")
+    elif not asked_model:
+        rep.add("model", "<boss>.bbmodel (bones, cube budget, grid, texture, palette, hitbox)", "NOT YET",
+                "checked from `--step model` on")
+    for step in STEPS[2:]:
+        not_yet(rep, step, asked=STEPS.index(step) <= STEPS.index(args.step))
     text = render(rep, boss_dir, args.step, args.iteration, spec if isinstance(spec, dict) else {})
     sys.stdout.reconfigure(encoding="utf-8")
     print(text)
