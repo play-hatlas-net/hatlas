@@ -70,6 +70,7 @@ All repos are in the GitHub organization **`play-hatlas-net`** (moved there by t
 - **Local PostgreSQL:** `docker compose -f docker/postgres/docker-compose.yml up -d --wait` (password in the git-ignored `docker/postgres/.env`, see `.env.example`). Usage and test recipe: `docs/storage.md` §4.
 - `run/` (test server and world) is git-ignored. **No world or map save is committed.**
 - **Boss pipeline** (round 22): skill `.claude/skills/boss-building/SKILL.md` + agents `boss-designer` (Fable), `boss-modeler` (Fable, pilot), `boss-animator`, `boss-sound`, `boss-coder` (Opus) and the existing `ingame-tester`; one folder per boss in `bosses/<dungeon>/<boss>/` (refs, `boss.yml`, `.bbmodel`, sounds), user gate after each step. Pilot: `bosses/dark_forest/fungal_root/` (mini-boss) + `dark_mushroom/` (minion): step 1 approved 2026-11-20, **step 2 (models) built, waiting for the user's gate**; tools `bosses/_tools/` (`bbmodel.py`, `texture.py`, `render.py`, `validate.py`), venv `bosses/_tools/.venv`.
+- **Skill trees** (round 27): skill `.claude/skills/skill-tree-building/SKILL.md` (effect catalogue → rules → combo matrix → `job-skills.yml` → `scripts/job-skills/validate.py` → user gate per job; all tree rules of rounds 19–27).
 - **Map pipeline** (planned): brief `worldgen/map.md`, skill `.claude/skills/map-building/SKILL.md` (WorldPainter driven by scripts, agents per step, BlueMap), generated outputs in git-ignored `worldgen/out/`.
 - MCP: `.mcp.json` declares `papermc-docs` → `https://gitmcp.io/PaperMC/docs` (GitMCP view of the PaperMC docs repo) and `vitaminmcp` (`cmd /c npx -y vitaminmcp@3.2.2`, pinned; bots + server observation for in-game tests).
 
@@ -400,7 +401,7 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 
 **Map building research:** [`docs/map-building.md`](docs/map-building.md) (Open Question 42).
 
-**Cities, city zones, dungeon server, skinned GUIs** (plan, rounds 17–18, 2026-11-11): [`docs/cities-and-dungeons.md`](docs/cities-and-dungeons.md); job skill trees: [`docs/job-skills.md`](docs/job-skills.md) (Open Questions 44–70). ✔ Round 19 (2026-11-12): **all of it ships at launch**. Round 20 (2026-11-13): **mining world** [`docs/mining-world.md`](docs/mining-world.md); epics jobs → dungeons → mining world → cities, **beta after each**. Round 21 (2026-11-16): items across servers + travel bag [`docs/cross-server-items.md`](docs/cross-server-items.md), ruby observatory [`docs/economy-observatory.md`](docs/economy-observatory.md). Round 23 (2026-11-19): **Runes** [`docs/runes.md`](docs/runes.md). Round 26 (2026-11-21): **builds and combat stats** [`docs/builds-and-stats.md`](docs/builds-and-stats.md).
+**Cities, city zones, dungeon server, skinned GUIs** (plan, rounds 17–18, 2026-11-11): [`docs/cities-and-dungeons.md`](docs/cities-and-dungeons.md); job skill trees: [`docs/job-skills.md`](docs/job-skills.md) (Open Questions 44–70). ✔ Round 19 (2026-11-12): **all of it ships at launch**. Round 20 (2026-11-13): **mining world** [`docs/mining-world.md`](docs/mining-world.md); epics jobs → dungeons → mining world → cities, **beta after each**. Round 21 (2026-11-16): items across servers + travel bag [`docs/cross-server-items.md`](docs/cross-server-items.md), ruby observatory [`docs/economy-observatory.md`](docs/economy-observatory.md). Round 23 (2026-11-19): **Runes** [`docs/runes.md`](docs/runes.md). Round 26–27 (2026-11-21): **builds and combat stats** [`docs/builds-and-stats.md`](docs/builds-and-stats.md).
 
 **Admin tuning guide:** [`docs/server-tuning.md`](docs/server-tuning.md) (compose priorities and NUMA pinning, JVM flags, Velocity/Paper configs, Sonar, GrimAC, anti-xray, LuckPerms, LibertyBans, CoreProtect).
 
@@ -559,16 +560,24 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 - ✔ user 2026-11-20: Fungal Root iteration 5 **approved** (extra loot roll for breaking the spit root, `spore_rain` substitutes `spore_cloud`, speed = movement only, break at ≈ 15 % HP, cap ×1.0); format extensions `reach`, `break_hp {base, per_extra_player}`, `reward`, `transition_ticks`, `show_bones`, `substitute` added to plan §4.6; **step 2 (model) started**.
 
 **Round 26 (2026-11-21)**: user ideas: final boss only after every mini-boss dies; **cooldowns grow with impact** (no diminishing returns: a stun must always work); **floating damage numbers**; new stats **crit / vampire** (Hunter), **regen / big health** (tanks, Miner eats stone), **crit guard** ("armour" against crits), **anti-regen** (healers); exclusive **roots** per tree (primary specialisation, 5+ dedicated nodes, shared secondary pool), example *Forger* node. Plan [`docs/builds-and-stats.md`](docs/builds-and-stats.md).
-127. **Final boss gate:** final boss only after all mini-bosses die, mini-boss enrage at 15 min, final boss forced at 20 min (recommended)?
-128. **Cooldown tiers** (5 tiers, stun 30–45 s PvP, team effects 60–120 s), no cooldown-reduction stat at launch, **1 s stun guard** instead of diminishing returns (refused casts keep their cooldown), tenacity as a tank secondary (recommended)?
-129. **Damage numbers:** TextDisplay seen by the attacker only, colours (gold ✦ crit, rune colour), merged hits, `/settings damage-numbers`, totals at the end of a boss fight (recommended)?
-130. **Hunter roots:** Crit (cap 40 % ×1.8) or Vampire (cap 10 % PvP / 18 % PvE); no double-dip with vanilla jump crits; rune damage never crits or leeches (recommended)?
-131. **Tank roots:** Regen (Miner eats stone via the `consumable` component, Lumberjack eats sap, half regen in combat) or Big health (+5 hearts PvP / +8 PvE); absorption stays a third thing given by others (recommended)?
-132. **Crit guard:** reduces only the crit bonus, −10 % per node, cap −50 %, nodes in every tank root, named *Crit guard* instead of "armour" (recommended)?
-133. **Healer roots:** Mender (heals) or Warder (shields); anti-regen (−40 %, cap −60 %) in the secondary pool of both roots (recommended)?
-134. **Tree shape:** one root per tree (2 at launch), 5+ dedicated nodes incl. 2+ combos, rune forks inside the roots, shared secondary pool, tanks and healers share root names but not nodes (recommended)?
-135. **Forger:** keen weapons lose 2 durability per crit, the Forger repairs them and adds *Honed*; Forger in the big-health root **with an equal combo in the regen root** (recommended), or Forger in the secondary pool?
-136. **Changing root:** full reset of that tree only (Wizard reset), no partial switch (recommended)?
+127. ~~**Final boss gate**~~ — ✔ answered 2026-11-21: enrage at 15 min, final boss forced at 20 min.
+128. ~~**Cooldown tiers**~~ — ✔ answered 2026-11-21: approved, and **all cooldowns halved** (user: dynamic, fast game); side rules OQ 137.
+129. ~~**Damage numbers**~~ — ✔ answered 2026-11-21: as described, in **PvE and PvP**.
+130. ~~**Hunter roots**~~ — ✔ answered 2026-11-21: random crit keeps its own chance **and boosts the vanilla jump crit**; both on one hit: OQ 139.
+131. ~~**Tank roots**~~ — ✔ answered 2026-11-21: Regen or Big health; **absorption belongs to the Regen root** (details OQ 140).
+132. ~~**Crit guard**~~ — ✔ answered 2026-11-21: approved (*Crit guard*).
+133. ~~**Healer roots**~~ — ✔ answered 2026-11-21: approved (Mender / Warder, anti-regen in both pools).
+134. ~~**Tree shape**~~ — ✔ answered 2026-11-21: approved; **at least 60 nodes per tree, 30 per root** (split: OQ 141).
+135. ~~**Forger**~~ — ✔ answered 2026-11-21: keen weapons + repair approved; **Forger in the secondary pool**.
+136. ~~**Changing root**~~ — ✔ answered 2026-11-21: changing root **resets the whole tree**.
+
+**Round 27 (2026-11-21)**: answers to OQ 127–136; cooldowns halved, shields time out, effects visible to everyone (vanilla client + resource pack), ≥ 60 nodes per tree; new skill **`skill-tree-building`**. Plan [`docs/builds-and-stats.md`](docs/builds-and-stats.md) §10–11.
+137. **Halved cooldowns, side rules:** defensive effects last at most 50 % of their cooldown; PvP healing received capped at 4 hearts per 10 s; PvE cooldowns halved too (recommended)?
+138. **Effect display:** icon row above the head (custom font on a TextDisplay passenger) + particle shapes for every effect, translucent bubble for shields, glow only for the stun guard (white) and marks (red), own effects as vanilla icons or in the action bar (recommended)?
+139. **Jump crit + random crit on one hit:** ×(M + 0.5), capped ×2.3, shown ✦✦ (recommended), or plain multiplication (up to ×3.24)?
+140. **Absorption in the Regen root:** regen overflow fills absorption (cap 3 hearts PvP / 5 PvE), decays 0.5 heart / 5 s while not hit; healer-given absorption times out (recommended)?
+141. **Node counts:** 30 per root = 12 primary + 6 rune fork sides + 12 shared pool (48 different nodes per tree) (recommended), or 30 own + 12 pool on top (60 different)? ≈ 60 % of a root reachable at level 50; bridge = one rune side + 3 pool nodes (recommended)?
+142. **Skill `skill-tree-building`:** run by the main session with the validator and a user gate per job (recommended), or a separate `tree-designer` agent?
 
 ## Changelog
 

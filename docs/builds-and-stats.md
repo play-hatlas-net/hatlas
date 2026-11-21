@@ -20,7 +20,7 @@ Round 26. User request (2026-11-21):
   - each root has **5+ dedicated nodes** with extra gameplay or combos with other roles. Example: a Miner tank on the big-health root has a **Forger** node that repairs a Hunter's crit sword.
 - OQ 72 changed again: the final boss only spawns when all mini-bosses are dead.
 
-Status: proposal. Open questions 127–136 are in §9 and mirrored in `CLAUDE.md`.
+Status: **round 27 (2026-11-21): OQ 127–136 answered**, the numbers below are updated (cooldowns halved, crit on jump crits, absorption in the Regen root, Forger in the secondary pool). New topics (effect display, shield timeout, node counts) and OQ 137–142 in §10–§11.
 
 ## 1. What the research says
 
@@ -71,23 +71,23 @@ Bridge nodes (max 2, runes.md §5): still at the end, need two rune paths
 
 ### 3.1 Tiers
 
-Every active skill gets an **impact tier**. The tier sets the cooldown range in `job-skills.yml > cooldowns` (proposal, OQ 128):
+Every active skill gets an **impact tier**. The tier sets the cooldown range in `job-skills.yml > cooldowns` (✔ OQ 128; **✔ round 27: all cooldowns halved**, user: "I want the game dynamic and fast"):
 
 | Tier | What it does | Examples | PvP cooldown | PvE cooldown |
 |---|---|---|---|---|
-| 1. Light | small effect on self | small dash, self haste 3 s, mark | 5–8 s | 4–6 s |
-| 2. Sustain | protects or heals one player | 2-heart shield, single heal, self cleanse | 12–20 s | 10–15 s |
-| 3. Soft control / zone | slows, damage zones, anti-regen | slow zone 3 s, damage zone 3 s, anti-regen hit | 15–25 s | 12–18 s |
-| 4. Hard control | removes control from a target | **stun**, root, silence, knock-up | **30–45 s** | 20–30 s |
-| 5. Team / big | changes a whole fight | rune boost for allies, team cleanse, summon 2 minions, shield that blocks a control | **60–120 s** | 45–90 s |
+| 1. Light | small effect on self | small dash, self haste 3 s, mark | 2.5–4 s | 2–3 s |
+| 2. Sustain | protects or heals one player | 2-heart shield, single heal, self cleanse | 6–10 s | 5–7.5 s |
+| 3. Soft control / zone | slows, damage zones, anti-regen | slow zone 3 s, damage zone 3 s, anti-regen hit | 7.5–12.5 s | 6–9 s |
+| 4. Hard control | removes control from a target | **stun**, root, silence, knock-up | **15–22.5 s** | 10–15 s |
+| 5. Team / big | changes a whole fight | rune boost for allies, team cleanse, summon 2 minions, shield that blocks a control | **30–60 s** | 22.5–45 s |
 
 - The validator of [`runes.md`](runes.md) §11 computes an **impact score**: tier × duration × targets × value. It refuses a skill whose cooldown is below its tier's range. Numbers can only be tuned inside the range.
 - **No cooldown reduction stat at launch.** It is the stat that breaks every LoL patch. Maybe one capped node (−10 %) after the beta.
 - Cooldowns run per skill. The Rune focus shows them on the item's cooldown bar (native `use_cooldown`, [`runes.md`](runes.md) §10).
 - **Results with the user's catalogue:**
-  - stun 2 s PvE / 1 s PvP → tier 4, 30–45 s PvP;
+  - stun 2 s PvE / 1 s PvP → tier 4, 15–22.5 s PvP (halved, round 27);
   - shield absorbing 2 hearts → tier 2;
-  - shield that **also blocks stun/burn/slow** → tier 5. Blocking a control beats a stun: it cancels a 30 s cooldown.
+  - shield that **also blocks stun/burn/slow** → tier 5. Blocking a control beats a stun: it cancels a 15 s cooldown.
 
 ### 3.2 Stuns always work, but no chains (replaces diminishing returns)
 
@@ -118,7 +118,7 @@ The user does not want "my stun did nothing because the target was already stunn
 | Countered by | **crit guard** (tanks), shields, the stun guard does not matter | **anti-regen** (healers), burst (it needs time) |
 | Combo nodes (examples) | *Keen edge*: crit swords from the Miner's Forger crit more but wear faster (§4.4) | *Blood pact*: the Farmer's feast also heals the vampire's next 3 hits |
 
-- **Vanilla jump crits** (1.8 combat keeps them): our crit roll and the jump crit **do not multiply each other**. The bigger one applies. Otherwise crit chance would double-dip on every jump.
+- **Vanilla jump crits** (✔ user, round 27): our crit stays a **random roll with its own chance** on any hit, and the crit stat **also boosts the vanilla jump crit** (×1.5 → up to ×1.8 with crit-damage nodes). A hit that is both a jump crit and a random crit: formula in §10.3, OQ 139.
 - Rune damage (skills) **never crits** and **never leeches**. Crit and vampire are weapon stats, like LoL attack damage; rune power stays the skill stat ([`runes.md`](runes.md) §7).
 
 ### 4.2 Tank: Regen root or Big health root
@@ -131,7 +131,7 @@ The user does not want "my stun did nothing because the target was already stunn
 | Cap | 0.5 heart / s **out of combat**, half while combat-tagged; eating has a 10 s cooldown | **+8 hearts PvE, +5 hearts PvP** (yml) |
 | Countered by | **anti-regen** (healers), burst | **% max-health damage** (a Hunter node, *Giant slayer*: +1 % of the target's max health per hit, capped) |
 
-- The **absorption hearts** of round 20 (yellow bar, Farmer *Rations*, Miner *Bulwark*) remain a third thing: a temporary buffer given by others. Big health raises max hearts; absorption is a refill on top. *Bulwark* becomes nodes of the Big health root.
+- **Absorption hearts** (✔ user round 27: "absorption is regen"): they move into the **Regen root**; proposal in §10.4 (regen overflow fills absorption, OQ 140). Big health only raises max hearts. Healers (Warder, Farmer *Rations*) can still give absorption to anyone.
 - **Challenge, eating stone in combat:** 1.6 s of eating already slows the player (vanilla eating slowdown), which is the right risk. A shorter eat time would make regen tanks unkillable in 1v1.
 
 ### 4.3 Crit guard (the user's "armour", a secondary for every tank root)
@@ -178,12 +178,10 @@ The validator ([`runes.md`](runes.md) §11) gets two new checks:
 
 ## 5. The Forger combo (user example) and durability
 
-User example: the Miner on the big-health root has a **Forger** node that repairs a Hunter's critical sword. A repair only matters if crit swords wear out, so (proposal, OQ 135):
+User example: a Miner **Forger** node repairs a Hunter's critical sword. **✔ Round 27: keen weapons and repair approved; Forger is in the secondary pool** (*Forge*), so both Miner roots can take it (OQ 135). Rules:
 - **Keen weapons** (Hunter crit combo, forged by the Miner's *Masterwork*) lose **2 durability per crit**. Vanilla Mending is not allowed on them (they are combo items).
 - The **Forger** repairs a keen weapon from any faction member in 3 s with iron; the weapon gains **Honed** (+5 % crit chance for 10 min, under the cap).
-- **Challenge:** the user put Forger in the big-health root. Then a Regen Miner can never repair, and a faction needs a big-health Miner to run crit.
-  - **Recommendation:** each root gets its own combo of the same weight. Regen Miner → *Stone cook*, mineral rations that also count as the Vampire's food buff.
-  - Alternatively, put Forger in the secondary pool (*Forge*) so both roots can take it.
+- ~~Challenge: Forger only in the big-health root~~ → solved: Forger is a secondary-pool node.
 
 ## 6. Floating damage numbers
 
@@ -219,7 +217,11 @@ User 2026-11-21: the boss only spawns when **all** mini-bosses are dead. It fits
 - Tree method §3.6 step 1 (effect catalogue) now includes crit, vampire, regen, max health, crit guard, tenacity, anti-regen and *Vitality*.
 - Cities plan OQ 72 → §7 here.
 
-## 9. Open questions (mirrored in `CLAUDE.md`)
+## 9. Open questions of round 26 (✔ all answered 2026-11-21, round 27)
+
+127 ✔ enrage 15 min, forced boss 20 min · 128 ✔ approved, **cooldowns halved** · 129 ✔ damage numbers in PvE **and PvP** · 130 ✔ random crit keeps its chance **and boosts the vanilla jump crit** · 131 ✔ absorption belongs to Regen · 132 ✔ · 133 ✔ · 134 ✔ shape, **min 60 nodes per tree, 30 per root** · 135 ✔ Forger in the secondary pool · 136 ✔ changing root resets the whole tree.
+
+Original wording:
 
 127. **Final boss gate:** final boss only after all mini-bosses die, mini-boss enrage at 15 min, final boss forced at 20 min (recommended)?
 128. **Cooldown tiers** (§3.1), no cooldown-reduction stat at launch, and the **1 s stun guard** instead of diminishing returns, with refused casts not spending the cooldown; tenacity as a tank secondary (recommended)?
@@ -231,3 +233,113 @@ User 2026-11-21: the boss only spawns when **all** mini-bosses are dead. It fits
 134. **Tree shape:** one root per tree (2 at launch), 5+ dedicated nodes with 2+ combos, rune forks inside the roots, shared secondary pool, tanks and healers share root names but not nodes (recommended)?
 135. **Forger:** keen weapons lose 2 durability per crit, the Forger repairs them and adds *Honed*; Forger stays in the big-health root **with an equal combo in the regen root** (recommended), or Forger moves to the secondary pool?
 136. **Changing root:** a full reset of that tree (the Wizard's tree reset, §5 of job-skills), no partial switch (recommended)?
+
+## 10. Round 27 (2026-11-21): answers and new design
+
+✔ **User decisions:**
+- OQ 127–136 answered (§9).
+- **Cooldowns halved.**
+- **Shields expire after a timeout.**
+- Every effect must be **visible to other players**.
+- Forger is in the secondary pool.
+- Changing root resets the whole tree.
+- Trees: **at least 60 nodes, 30 per root**.
+- The tree-building method becomes a skill, `skill-tree-building` (§10.6).
+
+### 10.1 Halved cooldowns: what changes (challenge)
+
+Halving every cooldown doubles the **uptime** of every effect, so three things need a rule:
+1. **Uptime cap.** A defensive effect (shield, damage reduction, haste) can last **at most 50 % of its cooldown**. A 2-heart shield on an 8 s cooldown lasts ≤ 4 s. Without this, a 6 s shield that lasts 6 s is always on. The validator checks `duration ≤ 0.5 × cooldown` for every self or ally buff.
+2. **Healing per window.** Twice as many heals per minute makes two healers unkillable. The rules sheet adds a PvP cap **per 10 s window**: healing received from players ≤ 4 hearts per 10 s (yml), regen and vampire included.
+3. **Stun chains.** Three stunners with 15 s cooldowns and the 1 s guard give a target stun 1 s → free 1 s → stun 1 s → free 1 s → stun 1 s, then 10 s free. A 1v3 losing is fine. The guard still prevents a 3 s lock.
+
+### 10.2 Shields expire
+
+Every shield is in `job-skills.yml > effects.<id>`:
+- `absorb` (hearts);
+- `duration` (it disappears at the end even if not broken);
+- `blocks` (the controls it blocks, if any).
+
+Defaults (PvP):
+
+| Shield | Absorbs | Lasts | Tier |
+|---|---|---|---|
+| Plain shield (self or ally) | 2 hearts | 4 s | 2 |
+| *Burning shield* (Alchemist, anti-slow, −15 % damage) | 1.5 hearts | 3 s | 3 |
+| Control-blocking shield | 1 heart + blocks the **first** stun/root | 3 s | 5 |
+
+- Shields never stack. A new shield replaces a weaker one, and the strongest one stays.
+- Shield breaker (catalogue opposite) removes it at once.
+- Absorption hearts given by healers also time out (Warder `duration`). Only the Regen root's own absorption decays slowly (§10.4).
+
+### 10.3 Crit on vanilla jump crits (user answer to OQ 130)
+
+User: "crit will add a boost to the vanilla crit when jumping, our crit is random and keeps its percentage chance". Proposal (OQ 139):
+- **Random crit:** chance from nodes (5 % → cap 40 %), multiplier `M` from crit-damage nodes (×1.5 → cap ×1.8). It works on any hit, jumping or not.
+- **Jump crit:** vanilla ×1.5 becomes ×M too: the crit-damage nodes boost it.
+- **Both on one hit** (jump crit + random crit roll): ×(M + 0.5), **capped at ×2.3**.
+  - Multiplying would give ×1.8 × 1.8 = ×3.24, a one-shot in 1.8 combat, which is too much.
+  - Crit guard reduces the whole part above ×1.0.
+- Damage numbers show a **double ✦✦** for that hit, so players learn the timing.
+
+### 10.4 Absorption in the Regen root (user answer to OQ 131)
+
+User: "absorption hearts is regen I think". I agree, with one nuance: absorption is a **buffer**, not healing. Proposal (OQ 140):
+- In the Regen root, **regen that would overflow full health fills absorption** (yellow hearts), up to a cap: **3 hearts PvP, 5 PvE**.
+- While not hit, the absorption decays 0.5 heart every 5 s, so it is not a permanent extra bar.
+- Anti-regen also stops the refill. Shield breaker removes it.
+- **Big health** does not get absorption from its own nodes. Absorption given by healers works on everyone.
+- Miner *Bulwark* (absorption max) nodes move from Big health to Regen. Big health keeps the armour and the *Iron wall*-style nodes.
+
+### 10.5 Showing effects on players (vanilla client + our resource pack, no mods)
+
+User: "a sign of effect so other players understand what effect a player has, e.g. a glowing circle around a shielded player; I don't know if it is possible without mods". It is possible with the server and the `hatlas` resource pack the players already download. Four tools exist, and I recommend combining them:
+
+| Tool | How it works in vanilla | Good for | Limits |
+|---|---|---|---|
+| **A. Icon row above the head** | A `TextDisplay` riding the player (passenger, follows smoothly), text = small icons from a **custom font** in the pack (`assets/hatlas/font/effects.json`: one glyph per effect) | Every effect at once: shield, stun, slow, burn, anti-regen, rune boost, soul… up to 4 icons, most important first, coloured by rune | Hidden behind walls (`see_through: false`); sits above the name tag |
+| **B. Particle shapes** | Server particles around the player, seen by everyone within 24 blocks | Big, readable states: **shield = rotating ring of dust in the rune's colour at waist height**; stun = stars circling the head; slow = snowflakes at the feet; anti-regen = dark smoke; burn = **visual fire without damage** (Paper `setVisualFire`) | Budget: ≤ 4 particles per tick per effect, none beyond 24 blocks |
+| **C. Shield bubble** | An `ItemDisplay` riding the player with a translucent sphere **item model** from the pack (scaled ×2.2) | The shield only: the most important thing to read in a fight; it fades out in the last second before the timeout | One entity per shield; the model is drawn by the `gui-art` step |
+| **D. Glow outline** | The vanilla glowing outline, coloured per viewer through team packets (packetevents) | Reserved: **white = stun guard** (§3.2), **red = Hunter's mark** | Only one colour per player at a time, so it cannot show many effects |
+
+- **Your own effects:**
+  - Effects that match a vanilla potion (slowness, resistance) use the real potion effect with its particles hidden, so you get the **vanilla icon** in the top-right corner for free.
+  - Custom effects show in the **action bar** as glyph + seconds.
+- **Allies and enemies see the same icons.** A small coloured frame (green ally / red enemy) is added on the glyphs, so a healer knows whom to cleanse.
+- `/settings effect-icons on|off` hides A for the viewer; B and C always stay on, because they are gameplay information.
+- **Recommendation (OQ 138):** A + B for every effect, C for shields, D only for the guard and marks.
+
+### 10.6 Node counts and the tree skill
+
+User: "at least a minimum of total nodes per tree? Let's start with 60? 30 into each root?" Proposal (OQ 141):
+
+| Part of a root | Nodes (min) | Notes |
+|---|---|---|
+| Primary dedicated nodes | **12** | the root's stat (crit, regen…), ≥ 2 combo nodes with other roles, 1 capstone |
+| Rune forks | **6** (3 forks × 2 sides) | the player takes one side per fork, so 3 of the 6 |
+| Shared nodes counted in the root | **12** | the secondary pool, the **same 12** in both roots: crit guard, tenacity, anti-regen, utility (*Forge* with Forger, *Siege*…) |
+| **Root total** | **30** | |
+
+- The tree then has 2 × 18 own nodes + 12 shared = **48 different nodes**, i.e. 60 node slots. 5 jobs × 48 = **240 nodes** to write and check.
+- If you want **60 different nodes** per tree, the pool comes on top of the 30. That makes 72 per tree and 360 in total: more content, but twice the balance work.
+- **Points:** 50 points at level 50. One root (with one side of each fork) costs about **75–85 points**, so a max-level player owns **≈ 60 %** of what their root offers.
+  - That replaces the old "≈ 40 % of the whole tree". Picking a root already removes half the tree, so 40 % of the rest would feel thin.
+  - Choices still matter: which secondary nodes, which rune side, which capstone.
+- **Bridge nodes** (max 2): the round 23 rule ("nodes of two runes") no longer works inside one root, because a player takes only one side of each rune fork.
+  - Proposal: a bridge needs **one rune side + 3 secondary nodes**, and it unlocks a weaker skill of another rune (OQ 141).
+
+**The skill** `.claude/skills/skill-tree-building/SKILL.md` (new, round 27) turns the tree method of [`job-skills.md`](job-skills.md) §3.6 into steps an agent follows. It holds every rule of rounds 19–27:
+- roots, node counts, costs, caps;
+- cooldown tiers, uptime cap, shield timeout, effect display;
+- counters, the Forger in the pool.
+
+The validator script `scripts/job-skills/validate.py` enforces these rules. One job is approved at a time (user gate).
+
+## 11. Open questions (round 27, mirrored in `CLAUDE.md`)
+
+137. **Halved cooldowns, side rules:** defensive effects last at most 50 % of their cooldown; PvP healing received capped at 4 hearts per 10 s; PvE cooldowns halved too (recommended)?
+138. **Effect display:** icon row above the head (custom font) + particle shapes for every effect, a translucent bubble for shields, glow only for the stun guard (white) and marks (red), own effects as vanilla icons or in the action bar (recommended)?
+139. **Jump crit + random crit on the same hit:** ×(M + 0.5), capped ×2.3, shown as ✦✦ (recommended), or plain multiplication (up to ×3.24)?
+140. **Absorption in the Regen root:** regen overflow fills absorption (cap 3 hearts PvP / 5 PvE), decays 0.5 heart / 5 s while not hit; healer-given absorption times out (recommended)?
+141. **Node counts:** 30 per root = 12 primary + 6 rune fork sides + 12 shared secondary nodes (48 different nodes per tree) (recommended), or 30 own + 12 shared on top (60 different)? ≈ 60 % of a root reachable at level 50; bridge nodes need one rune side + 3 secondary nodes (recommended)?
+142. **Skill `skill-tree-building`:** run by the main session with the validator and a user gate per job, no separate agent (recommended), or a `tree-designer` agent like the boss pipeline?

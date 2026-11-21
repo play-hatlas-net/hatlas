@@ -248,6 +248,8 @@ built** or that **break PvP**. So the trees are produced in this order, each ste
 > the effect catalogue = [`runes.md`](runes.md) §4, the rules sheet adds §6 (no stacking, diminishing
 > returns, PvP values), the combo matrix adds the rune wheel and the counter check of §11.
 
+> **Round 27 (2026-11-21):** the method is now the skill **`skill-tree-building`** (`.claude/skills/skill-tree-building/SKILL.md`), with all the rules of rounds 19–27. Changes to the steps below: exclusive roots, **≥ 30 nodes per root** (≥ 60 per tree), budget ≈ 60 % of **one root** instead of 40 % of the tree, cooldowns halved, uptime cap, shield timeout, effect display, new primitives (crit, vampire, regen, absorption overflow, max health, crit guard, tenacity, anti-regen) ([`builds-and-stats.md`](builds-and-stats.md) §10).
+
 #### 3.6.1 The six steps in detail (round 21, user asked)
 
 The idea in one line: **first decide what the code can do, then the rules, then who combines with whom,
