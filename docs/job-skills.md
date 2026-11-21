@@ -63,6 +63,8 @@ Completing a quest gives job XP to the player and, **if they are in a faction**,
 
 ### 3.1 Shape (✔ round 19)
 
+> **Round 26 (user):** the start node now opens **2+ exclusive roots** (primary specialisations: Hunter Crit / Vampire, tanks Regen / Big health, healers Mender / Warder), each with **5+ dedicated nodes**, rune forks inside, and a **shared secondary pool** (crit guard, the former utility branches). Proposal in [`builds-and-stats.md`](builds-and-stats.md) §2 (OQ 134); the shape below is the round 19–21 version.
+
 - A **start node**, then **2 or more branches** start from it.
 - **Each branch splits into at least 2** sub-branches, again and again: at every fork the player **chooses
   one path**.

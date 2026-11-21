@@ -57,6 +57,10 @@
 
 ## 2. Challenges after round 23
 
+### 2.0a Round 26 (2026-11-21): final boss gate
+
+✔ **User:** the final boss **only spawns when every mini-boss is dead** (OQ 72 changed again). Challenge (stalling: a holder could refuse to kill the last mini-boss) and the proposed enrage at 15 min / forced spawn at 20 min: [`builds-and-stats.md`](builds-and-stats.md) §7, OQ 127.
+
 ### 2.0 Round 23 (2026-11-19): answers
 
 ✔ **Decided by the user:**

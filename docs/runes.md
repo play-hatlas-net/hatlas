@@ -142,6 +142,8 @@ node is built only from these effects.
 
 ## 5. Specialities in the trees
 
+> **Round 26:** trees now start with exclusive **roots** (primary specialisations); the rune forks move **inside each root** ([`builds-and-stats.md`](builds-and-stats.md) §2, OQ 134).
+
 The tree shape stays as approved (start → 3 branches → forks). Runes are added like this (proposal, OQ 107):
 - **The forks become rune choices.** In each branch, one side of a fork is rune A, the other rune B. The
   sample forks of [`job-skills.md`](job-skills.md) §3.2.1 already fit: Miner *Bulwark* → **Iron wall
@@ -158,7 +160,7 @@ The tree shape stays as approved (start → 3 branches → forks). Runes are add
 
 1. **No stacking of the same effect:** two slows on one target → only the **strongest** applies, durations
    refresh but do not add. Four Frost players cannot freeze someone forever.
-2. **Diminishing returns on controls** (stun, root, silence, strong slow): on the same target within 10 s,
+2. ~~**Diminishing returns on controls**~~ **Replaced round 26 (user: a stun must never fail):** cooldowns by impact tier + a 1 s stun guard, see [`builds-and-stats.md`](builds-and-stats.md) §3. Old text: **Diminishing returns on controls** (stun, root, silence, strong slow): on the same target within 10 s,
    the 2nd control lasts **half**, the 3rd does nothing (immune until the 10 s pass). Shown on the target's
    action bar. Without it, a faction with 3 stuns locks a player until death.
 3. **PvP values are lower than PvE values** (yml `effects.<id>.pvp`). Example: **stun 1 s in PvP** (1.8 combat
