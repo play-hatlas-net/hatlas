@@ -69,13 +69,25 @@ for x in (5, -5):                                         # the mouth seen from 
     c.fx("body", -5, 7, 1, 2, x, "glow_core")
     c.fx("body", -3, 6, 1, 3, x, "glow_core")
 
+DEEP = {"cyan_glow": "cyan_deep", "lilac_glow": "lilac_deep"}
+
+
+def spot(fn, a, y, w, h, p, color):
+    """Zone readability (skill step 1): a cap spot is a dim patch with ONE bright pixel; the big bright
+    patches belong to the weak points."""
+    if w * h > 1:
+        fn("head", a, y, w, h, p, DEEP[color])
+    fn("head", a, y, 1, 1, p, color)
+
+
 c.note("head: the cap. Stepped dome, glowing gills, eyes on its front")
 c.box("head", -7, 8 + H, -7, 14, 1, 14, "cyan_deep")      # gills
-for x in (-6, -4, -2, 0, 2, 4, 6):
-    c.fz("head", x, 8 + H, 1, 1, -7, "cyan_glow")
-    c.fz("head", x, 8 + H, 1, 1, 7, "cyan_glow")
-    c.fx("head", x, 8 + H, 1, 1, 7, "cyan_glow")
-    c.fx("head", x, 8 + H, 1, 1, -7, "cyan_glow")
+for i, x in enumerate((-6, -4, -2, 0, 2, 4, 6)):          # zone readability: one gill dot in three is bright
+    col = "cyan_glow" if i % 3 == 0 else "cyan_deep"
+    c.fz("head", x, 8 + H, 1, 1, -7, col)
+    c.fz("head", x, 8 + H, 1, 1, 7, col)
+    c.fx("head", x, 8 + H, 1, 1, 7, col)
+    c.fx("head", x, 8 + H, 1, 1, -7, col)
 c.box("head", -8, 9 + H, -6, 16, 2, 12, "cap_deep")       # brim (octagon)
 c.box("head", -6, 9 + H, -8, 12, 2, 16, "cap_deep")
 c.box("head", -7, 9 + H, -7, 14, 2, 14, "cap_deep")
@@ -97,21 +109,21 @@ c.box("head", -5, 11 + H, -9, 3, 3, 2, "cyan_glow")       # left eye: smaller
 c.fz("head", -4, 11 + H, 1, 3, -9, "void_dark")
 c.fz("head", -3, 13 + H, 1, 1, -9, "cap_deep")
 c.fx("head", -9, 12 + H, 1, 1, -5, "void_dark")
-c.fz("head", -1, 12 + H, 2, 1, -7, "lilac_glow")          # spots, cyan and lavender
-c.fz("head", -3, 15 + H, 1, 1, -5, "cyan_glow")
-c.fz("head", 2, 15 + H, 2, 1, -5, "lilac_glow")
-c.fx("head", -3, 10 + H, 2, 1, 8, "cyan_glow")
-c.fx("head", 1, 12 + H, 2, 2, 7, "lilac_glow")
-c.fx("head", -2, 15 + H, 1, 1, 5, "cyan_glow")
-c.fx("head", 4, 10 + H, 1, 1, 8, "cyan_glow")
-c.fx("head", -2, 10 + H, 2, 1, -8, "lilac_glow")
-c.fx("head", 2, 12 + H, 2, 2, -7, "cyan_glow")
-c.fx("head", 0, 15 + H, 1, 1, -5, "cyan_glow")
-c.fz("head", -4, 10 + H, 2, 1, 8, "cyan_glow")
-c.fz("head", 2, 12 + H, 2, 2, 7, "lilac_glow")
-c.fz("head", -2, 13 + H, 1, 1, 7, "cyan_glow")
-c.fz("head", 3, 10 + H, 1, 1, 8, "cyan_glow")
-c.fz("head", -2, 15 + H, 2, 1, 5, "cyan_glow")
+spot(c.fz, -1, 12 + H, 2, 1, -7, "lilac_glow")          # spots, cyan and lavender
+spot(c.fz, -3, 15 + H, 1, 1, -5, "cyan_glow")
+spot(c.fz, 2, 15 + H, 2, 1, -5, "lilac_glow")
+spot(c.fx, -3, 10 + H, 2, 1, 8, "cyan_glow")
+spot(c.fx, 1, 12 + H, 2, 2, 7, "lilac_glow")
+spot(c.fx, -2, 15 + H, 1, 1, 5, "cyan_glow")
+spot(c.fx, 4, 10 + H, 1, 1, 8, "cyan_glow")
+spot(c.fx, -2, 10 + H, 2, 1, -8, "lilac_glow")
+spot(c.fx, 2, 12 + H, 2, 2, -7, "cyan_glow")
+spot(c.fx, 0, 15 + H, 1, 1, -5, "cyan_glow")
+spot(c.fz, -4, 10 + H, 2, 1, 8, "cyan_glow")
+spot(c.fz, 2, 12 + H, 2, 2, 7, "lilac_glow")
+spot(c.fz, -2, 13 + H, 1, 1, 7, "cyan_glow")
+spot(c.fz, 3, 10 + H, 1, 1, 8, "cyan_glow")
+spot(c.fz, -2, 15 + H, 2, 1, 5, "cyan_glow")
 
 c.note("sprout: a tiny mushroom growing on the cap (wobbles when it walks)")
 c.box("sprout", 1, 17 + H, 1, 1, 1, 1, "stem_pale")

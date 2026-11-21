@@ -208,7 +208,12 @@ blocks the gate.
   everywhere else bright glow is 1 px dots or 1 px lines, and most glow is the dim `*_deep` tone;
   armoured parts have none. Each weak point has a darker rim or socket. A breakable part has a pale seam
   at its joint. Check it on the previews from 10 blocks (a small render): the eye must land on the weak
-  points first.
+  points first. `validate.py` checks it from step 1 on (group `readability`, on `concept.yml` + the
+  `model.yml` paints): bright patches ≥ 2 × 2 px only on weak or breakable zones, the largest one on a
+  weak point, every weak point lit and framed by one of the two darkest palette colours, no bright glow
+  on armour, a pale seam on every breakable part, and away from the targets more dim glow than bright.
+  A minion (no zones) keeps its painted bright details 1 px wide, so the same grammar holds.
+  Colours come from the concept source (`concept/design.py`), never from hand edits of `concept.yml`.
 - Previews: turntable (8 angles) + front/side next to the concept sheet, so the gate compares them.
 - Blockbench MCP (if installed): only to screenshot the model as Blockbench shows it and to apply small
   edits while the user watches; the file stays the source of truth.

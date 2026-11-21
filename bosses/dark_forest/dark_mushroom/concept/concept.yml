@@ -63,26 +63,26 @@ parts:
   - {bone: head, from: [-6, 10, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
   - {bone: head, from: [7, 10, -6], size: [0, 1, 1], color: cyan_glow, paint: true}
   - {bone: head, from: [-7, 10, -6], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-4, 10, -7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [-4, 10, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [7, 10, -4], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-7, 10, -4], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-2, 10, -7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [-2, 10, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [7, 10, -2], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-7, 10, -2], size: [0, 1, 1], color: cyan_glow, paint: true}
+  - {bone: head, from: [-4, 10, -7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [-4, 10, 7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [7, 10, -4], size: [0, 1, 1], color: cyan_deep, paint: true}
+  - {bone: head, from: [-7, 10, -4], size: [0, 1, 1], color: cyan_deep, paint: true}
+  - {bone: head, from: [-2, 10, -7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [-2, 10, 7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [7, 10, -2], size: [0, 1, 1], color: cyan_deep, paint: true}
+  - {bone: head, from: [-7, 10, -2], size: [0, 1, 1], color: cyan_deep, paint: true}
   - {bone: head, from: [0, 10, -7], size: [1, 1, 0], color: cyan_glow, paint: true}
   - {bone: head, from: [0, 10, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
   - {bone: head, from: [7, 10, 0], size: [0, 1, 1], color: cyan_glow, paint: true}
   - {bone: head, from: [-7, 10, 0], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [2, 10, -7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [2, 10, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [7, 10, 2], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-7, 10, 2], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [4, 10, -7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [4, 10, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [7, 10, 4], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-7, 10, 4], size: [0, 1, 1], color: cyan_glow, paint: true}
+  - {bone: head, from: [2, 10, -7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [2, 10, 7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [7, 10, 2], size: [0, 1, 1], color: cyan_deep, paint: true}
+  - {bone: head, from: [-7, 10, 2], size: [0, 1, 1], color: cyan_deep, paint: true}
+  - {bone: head, from: [4, 10, -7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [4, 10, 7], size: [1, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [7, 10, 4], size: [0, 1, 1], color: cyan_deep, paint: true}
+  - {bone: head, from: [-7, 10, 4], size: [0, 1, 1], color: cyan_deep, paint: true}
   - {bone: head, from: [6, 10, -7], size: [1, 1, 0], color: cyan_glow, paint: true}
   - {bone: head, from: [6, 10, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
   - {bone: head, from: [7, 10, 6], size: [0, 1, 1], color: cyan_glow, paint: true}
@@ -108,21 +108,30 @@ parts:
   - {bone: head, from: [-4, 13, -9], size: [1, 3, 0], color: void_dark, paint: true}
   - {bone: head, from: [-3, 15, -9], size: [1, 1, 0], color: cap_deep, paint: true}
   - {bone: head, from: [-5, 14, -9], size: [0, 1, 1], color: void_dark, paint: true}
-  - {bone: head, from: [-1, 14, -7], size: [2, 1, 0], color: lilac_glow, paint: true}
+  - {bone: head, from: [-1, 14, -7], size: [2, 1, 0], color: lilac_deep, paint: true}
+  - {bone: head, from: [-1, 14, -7], size: [1, 1, 0], color: lilac_glow, paint: true}
   - {bone: head, from: [-3, 17, -5], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [2, 17, -5], size: [2, 1, 0], color: lilac_glow, paint: true}
-  - {bone: head, from: [8, 12, -3], size: [0, 1, 2], color: cyan_glow, paint: true}
-  - {bone: head, from: [7, 14, 1], size: [0, 2, 2], color: lilac_glow, paint: true}
+  - {bone: head, from: [2, 17, -5], size: [2, 1, 0], color: lilac_deep, paint: true}
+  - {bone: head, from: [2, 17, -5], size: [1, 1, 0], color: lilac_glow, paint: true}
+  - {bone: head, from: [8, 12, -3], size: [0, 1, 2], color: cyan_deep, paint: true}
+  - {bone: head, from: [8, 12, -3], size: [0, 1, 1], color: cyan_glow, paint: true}
+  - {bone: head, from: [7, 14, 1], size: [0, 2, 2], color: lilac_deep, paint: true}
+  - {bone: head, from: [7, 14, 1], size: [0, 1, 1], color: lilac_glow, paint: true}
   - {bone: head, from: [5, 17, -2], size: [0, 1, 1], color: cyan_glow, paint: true}
   - {bone: head, from: [8, 12, 4], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-8, 12, -2], size: [0, 1, 2], color: lilac_glow, paint: true}
-  - {bone: head, from: [-7, 14, 2], size: [0, 2, 2], color: cyan_glow, paint: true}
+  - {bone: head, from: [-8, 12, -2], size: [0, 1, 2], color: lilac_deep, paint: true}
+  - {bone: head, from: [-8, 12, -2], size: [0, 1, 1], color: lilac_glow, paint: true}
+  - {bone: head, from: [-7, 14, 2], size: [0, 2, 2], color: cyan_deep, paint: true}
+  - {bone: head, from: [-7, 14, 2], size: [0, 1, 1], color: cyan_glow, paint: true}
   - {bone: head, from: [-5, 17, 0], size: [0, 1, 1], color: cyan_glow, paint: true}
-  - {bone: head, from: [-4, 12, 8], size: [2, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [2, 14, 7], size: [2, 2, 0], color: lilac_glow, paint: true}
+  - {bone: head, from: [-4, 12, 8], size: [2, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [-4, 12, 8], size: [1, 1, 0], color: cyan_glow, paint: true}
+  - {bone: head, from: [2, 14, 7], size: [2, 2, 0], color: lilac_deep, paint: true}
+  - {bone: head, from: [2, 14, 7], size: [1, 1, 0], color: lilac_glow, paint: true}
   - {bone: head, from: [-2, 15, 7], size: [1, 1, 0], color: cyan_glow, paint: true}
   - {bone: head, from: [3, 12, 8], size: [1, 1, 0], color: cyan_glow, paint: true}
-  - {bone: head, from: [-2, 17, 5], size: [2, 1, 0], color: cyan_glow, paint: true}
+  - {bone: head, from: [-2, 17, 5], size: [2, 1, 0], color: cyan_deep, paint: true}
+  - {bone: head, from: [-2, 17, 5], size: [1, 1, 0], color: cyan_glow, paint: true}
   # --- sprout: a tiny mushroom growing on the cap (wobbles when it walks)
   - {bone: sprout, from: [1, 19, 1], size: [1, 1, 1], color: stem_pale}
   - {bone: sprout, from: [0, 20, 0], size: [3, 1, 3], color: cap_light}

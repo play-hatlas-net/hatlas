@@ -135,6 +135,12 @@ c.fz("spit_root", 19, 52, 1, 1, 7, "lilac_glow")
 c.fz("spit_root", 22, 58, 1, 3, 5, "night_bark")
 c.fz("spit_root", 22, 58, 1, 3, 10, "night_bark")
 c.fx("spit_root", 7, 58, 1, 3, 26, "night_bark")
+c.fz("spit_root", 19, 29, 1, 6, 5, "stem_pale")           # zone readability: the pale seam where the root
+c.fz("spit_root", 19, 29, 1, 6, 11, "stem_pale")          # will tear off (breakable part), sap showing through
+c.paint("spit_root", 19, 35, 5, 1, 0, 6, "stem_pale")
+c.paint("spit_root", 19, 29, 5, 1, 0, 6, "stem_pale")
+c.fz("spit_root", 19, 31, 1, 1, 5, "lilac_deep")
+c.fz("spit_root", 19, 33, 1, 1, 11, "lilac_deep")
 c.note("spit_jaw_l / spit_jaw_r: the tip split into two peeled halves lined with teeth; spit_pod glows in the gape")
 c.box("spit_jaw_l", 18, 61, 5, 2, 11, 5, "bark")
 c.box("spit_jaw_l", 20, 65, 5, 2, 1, 1, "glow_core")
@@ -233,17 +239,15 @@ c.box("chest", -4, 46, 1, 6, 1, 4, "cap_deep")            # shelf fungus on the 
 c.box("chest", 4, 47, -5, 2, 1, 4, "lichen")
 c.box("eyes", -4, 39, -8, 8, 12, 1, "bark")              # eye plate: the front of the upper trunk, its own
                                                           # bone only to be a hit zone (weak point); never animated
-c.fz("eyes", 1, 43, 3, 7, -8, "void_dark")               # right eye: tall knot-hole
-c.fz("eyes", 1, 44, 2, 5, -8, "cyan_glow")
-c.fz("eyes", 2, 46, 1, 2, -8, "glow_core")
-c.fz("eyes", -4, 41, 3, 5, -8, "void_dark")              # left eye: lower, smaller
-c.fz("eyes", -3, 42, 2, 3, -8, "cyan_glow")
-c.fz("eyes", -3, 43, 1, 1, -8, "glow_core")
-c.fz("eyes", -2, 47, 3, 3, -8, "void_dark")              # third, tiny
-c.fz("eyes", -1, 48, 1, 1, -8, "cyan_glow")
+c.fz("eyes", 0, 42, 4, 8, -8, "void_dark")               # right eye: tall knot-hole in a black socket
+c.fz("eyes", 1, 43, 2, 6, -8, "cyan_glow")                # (zone readability: the eyes are the boss's
+c.fz("eyes", 1, 45, 1, 3, -8, "glow_core")                #  biggest bright patch, white-hot centre)
+c.fz("eyes", -4, 40, 4, 6, -8, "void_dark")              # left eye: lower, smaller
+c.fz("eyes", -3, 41, 2, 4, -8, "cyan_glow")
+c.fz("eyes", -2, 42, 1, 2, -8, "glow_core")
+c.fz("eyes", -3, 47, 3, 3, -8, "void_dark")              # third, tiny
+c.fz("eyes", -2, 48, 1, 1, -8, "cyan_glow")
 c.fz("eyes", -4, 39, 8, 1, -8, "night_bark")
-c.fz("eyes", 0, 40, 1, 3, -8, "night_bark")
-c.fz("eyes", -1, 39, 1, 2, -8, "cyan_deep")              # the trunk vein reaches the eyes
 c.fx("chest", -5, 40, 1, 9, 4, "night_bark")
 c.fx("chest", -2, 39, 1, 7, 4, "night_bark")
 c.fz("chest", -2, 46, 1, 5, 1, "night_bark")
@@ -264,12 +268,14 @@ c.fz("neck", -1, 50, 1, 4, -6, "stem_shadow")
 # ------------------------------------------------------------------ the cap
 c.note("head: the cap. Stepped dome hanging forward (front lip lower, each step set back), glowing gills below")
 cap(54, 1, 28, 26, "cyan_deep")                           # gills: the glowing underside
-for x in range(-13, 14, 2):
-    c.fz("head", x, 54, 1, 1, CZ - 13, "cyan_glow")
-    c.fz("head", x, 54, 1, 1, CZ + 13, "cyan_glow")
-for z in range(-12, 13, 2):
-    c.fx("head", CZ + z, 54, 1, 1, 14, "cyan_glow")
-    c.fx("head", CZ + z, 54, 1, 1, -14, "cyan_glow")
+for i, x in enumerate(range(-13, 14, 2)):                 # zone readability: one gill dot in three is bright
+    col = "cyan_glow" if i % 3 == 0 else "cyan_deep"
+    c.fz("head", x, 54, 1, 1, CZ - 13, col)
+    c.fz("head", x, 54, 1, 1, CZ + 13, col)
+for i, z in enumerate(range(-12, 13, 2)):
+    col = "cyan_glow" if i % 3 == 0 else "cyan_deep"
+    c.fx("head", CZ + z, 54, 1, 1, 14, col)
+    c.fx("head", CZ + z, 54, 1, 1, -14, col)
 cap(55, 3, 34, 26, "cap_deep")                            # brim (octagon)
 cap(55, 3, 26, 34, "cap_deep")
 cap(55, 3, 30, 30, "cap_deep")
@@ -286,33 +292,44 @@ cap(58, 4, 26, 26, "cap_deep", cz=-8)
 cap(62, 3, 22, 22, "cap", cz=-7)                          # third step
 cap(65, 2, 14, 14, "cap", cz=-6)                          # top
 cap(66, 1, 14, 14, "cap_light", cz=-6, paint=True)
+DEEP = {"cyan_glow": "cyan_deep", "lilac_glow": "lilac_deep"}
+
+
+def spot(fn, a, y, w, h, p, color):
+    """Zone readability (skill step 1): a cap spot is a dim patch with ONE bright pixel; the big bright
+    patches belong to the weak points."""
+    if w * h > 1:
+        fn("head", a, y, w, h, p, DEEP[color])
+    fn("head", a, y, 1, 1, p, color)
+
+
 # glowing spots, cyan and lavender. Front planes: brim z -26, second step z -23, third step z -18
-c.fz("head", -9, 56, 2, 2, -26, "cyan_glow")
-c.fz("head", 6, 56, 2, 1, -26, "lilac_glow")
-c.fz("head", 0, 56, 1, 1, -26, "cyan_glow")
-c.fz("head", -3, 59, 3, 2, -23, "cyan_glow")
-c.fz("head", 7, 60, 1, 1, -23, "cyan_glow")
-c.fz("head", -9, 60, 2, 1, -23, "lilac_glow")
-c.fz("head", 3, 63, 2, 1, -18, "lilac_glow")
-c.fz("head", -6, 63, 1, 1, -18, "cyan_glow")
-c.fz("head", 9, 63, 1, 1, -18, "cyan_glow")
+spot(c.fz, -9, 56, 2, 2, -26, "cyan_glow")
+spot(c.fz, 6, 56, 2, 1, -26, "lilac_glow")
+spot(c.fz, 0, 56, 1, 1, -26, "cyan_glow")
+spot(c.fz, -3, 59, 3, 2, -23, "cyan_glow")
+spot(c.fz, 7, 60, 1, 1, -23, "cyan_glow")
+spot(c.fz, -9, 60, 2, 1, -23, "lilac_glow")
+spot(c.fz, 3, 63, 2, 1, -18, "lilac_glow")
+spot(c.fz, -6, 63, 1, 1, -18, "cyan_glow")
+spot(c.fz, 9, 63, 1, 1, -18, "cyan_glow")
 # back planes: brim z 8, second step z 7, third step z 4
-c.fz("head", -8, 56, 2, 1, 8, "cyan_glow")
-c.fz("head", 4, 56, 2, 2, 8, "lilac_glow")
-c.fz("head", 0, 59, 2, 2, 7, "cyan_glow")
-c.fz("head", -8, 60, 1, 1, 7, "lilac_glow")
-c.fz("head", 7, 60, 1, 1, 7, "cyan_glow")
-c.fz("head", 5, 63, 1, 1, 4, "cyan_glow")
-c.fz("head", -4, 63, 2, 1, 4, "cyan_glow")
+spot(c.fz, -8, 56, 2, 1, 8, "cyan_glow")
+spot(c.fz, 4, 56, 2, 2, 8, "lilac_glow")
+spot(c.fz, 0, 59, 2, 2, 7, "cyan_glow")
+spot(c.fz, -8, 60, 1, 1, 7, "lilac_glow")
+spot(c.fz, 7, 60, 1, 1, 7, "cyan_glow")
+spot(c.fz, 5, 63, 1, 1, 4, "cyan_glow")
+spot(c.fz, -4, 63, 2, 1, 4, "cyan_glow")
 # sides: brim x +-17, second step x +-15, third step x +-11
 for x, s in ((17, 1), (-17, -1)):
-    c.fx("head", -18, 56, 2, 2, x, "cyan_glow")
-    c.fx("head", -5, 56, 2, 1, x, "lilac_glow")
-    c.fx("head", 1, 56, 1, 1, x, "cyan_glow")
-    c.fx("head", -12, 59, 2, 2, x - 2 * s, "lilac_glow")
-    c.fx("head", -2, 60, 1, 1, x - 2 * s, "cyan_glow")
-    c.fx("head", -15, 63, 1, 1, x - 6 * s, "cyan_glow")
-    c.fx("head", -7, 63, 2, 1, x - 6 * s, "cyan_glow")
+    spot(c.fx, -18, 56, 2, 2, x, "cyan_glow")
+    spot(c.fx, -5, 56, 2, 1, x, "lilac_glow")
+    spot(c.fx, 1, 56, 1, 1, x, "cyan_glow")
+    spot(c.fx, -12, 59, 2, 2, x - 2 * s, "lilac_glow")
+    spot(c.fx, -2, 60, 1, 1, x - 2 * s, "cyan_glow")
+    spot(c.fx, -15, 63, 1, 1, x - 6 * s, "cyan_glow")
+    spot(c.fx, -7, 63, 2, 1, x - 6 * s, "cyan_glow")
 
 c.note("cap_sprouts: young mushrooms growing on the cap (they shake when it casts)")
 c.box("cap_sprouts", 8, 65, -1, 1, 5, 1, "stem_pale")
@@ -332,8 +349,7 @@ c.note("tendrils: glowing strands dripping from the brim (four bones so they can
 
 def tendril(bone, x, z, length, top=55):
     c.box(bone, x, top - length, z, 1, length, 1, "cyan_deep")
-    c.paint(bone, x, top - length, z, 1, 2, 1, "cyan_glow")
-    c.paint(bone, x, top - length, z, 1, 1, 1, "glow_core")
+    c.paint(bone, x, top - length, z, 1, 1, 1, "cyan_glow")  # the drop: one bright pixel (zone readability)
 
 
 tendril("tendrils_f", 11, -26, 6, top=52)                 # kept away from the eyes and the bulb
@@ -352,6 +368,10 @@ c.note("bulb: the lavender sap sac under the cap, and the sap vein that feeds th
 c.box("bulb", -8, 49, -19, 1, 5, 1, "cap_deep")
 c.box("bulb", -10, 43, -21, 5, 6, 5, "lilac_deep")
 c.box("bulb", -6, 45, -16, 2, 1, 10, "lilac_deep")         # sap vein from the sac to the trunk
+c.fz("bulb", -10, 43, 5, 6, -21, "void_dark")             # zone readability: a black socket ring around
+c.fx("bulb", -21, 43, 5, 6, -10, "void_dark")             # each lavender light of the sac
+c.fx("bulb", -21, 43, 5, 6, -5, "void_dark")
+c.fz("bulb", -10, 43, 5, 6, -16, "void_dark")
 c.fz("bulb", -9, 44, 3, 4, -21, "lilac_glow")
 c.fz("bulb", -8, 46, 1, 1, -21, "glow_core")
 c.fx("bulb", -20, 44, 3, 4, -10, "lilac_glow")

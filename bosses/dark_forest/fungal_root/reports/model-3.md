@@ -2,7 +2,7 @@
 
 - Date: 2026-11-21
 - Command: `python bosses/_tools/validate.py bosses/dark_forest/fungal_root --step model`
-- **Verdict: PASS** (129 PASS, 0 FAIL, 2 not yet)
+- **Verdict: PASS** (136 PASS, 0 FAIL, 2 not yet)
 
 | Group | Check | Result | Numbers |
 |---|---|---|---|
@@ -94,13 +94,20 @@
 | concept | pixel art uses the palette only | PASS | 0 colours outside style.md |
 | concept | zone overlay and mutated views are drawn | PASS | zones.png, mutation_torn_spit_root.png |
 | concept | bones hidden until a mutation are drawn (counted in the cube budget) | INFO | spit_stump: 3 cubes |
-| concept | cubes <= budget (120) | PASS | 117 cubes, 277 painted details |
+| concept | cubes <= budget (120) | PASS | 117 cubes, 291 painted details |
 | concept | extra bones: each declared once, none is a fixed name | PASS | 32 extras |
 | concept | every bone drawn is a fixed name or declared in boss.yml > bones | PASS | 34 bones drawn |
 | concept | every declared extra bone is drawn | PASS |  |
 | concept | body and head are drawn | PASS |  |
 | concept | trunk and legs stay inside the hitbox width | PASS | reach 14 px, half hitbox 14 px |
 | concept | hitbox height between 75 % and 100 % of the drawn height | PASS | hitbox 72 px, drawn 80 px (5 blocks), widest reach 29 px |
+| readability | bright patches (>= 2x2 px) only on weak points and breakable parts | PASS | 7 bright patches, all on target zones |
+| readability | the largest bright patch is on a weak point | PASS | eyes cyan_glow (12 px) |
+| readability | every weak point shows a bright patch (>= 2x2 px) | PASS |  |
+| readability | armoured parts carry no bright glow | PASS |  |
+| readability | every weak point sits in a dark socket or rim (night_bark/void_dark) | PASS |  |
+| readability | every breakable part shows a pale seam | PASS |  |
+| readability | away from weak points, most glow is the dim tone (cyan_deep/lilac_deep) | PASS | bright 87 px, dim 1277 px |
 | model | fungal_root.bbmodel exists | PASS | fungal_root.bbmodel |
 | model | Blockbench format pinned (4.10, generic model, per-face UV) | PASS | format_version 4.10, model_format free, box_uv False |
 | model | hash file: who wrote the model last | INFO | the script (sha256 matches) |
@@ -121,7 +128,7 @@
 | model | texture uses the palette only | PASS | 15 palette colours, 0 outside style.md |
 | model | texture pixels are opaque or empty (no half transparency) | PASS | 0 half-transparent px |
 | model | every textured face has a UV rectangle inside the texture, on painted pixels | PASS | 661 textured faces |
-| model | emissive cubes: `light_emission` 15 and a name with `glow` go together | PASS | 22 emissive cubes |
+| model | emissive cubes: `light_emission` 15 and a name with `glow` go together | PASS | 21 emissive cubes |
 | model | `hitbox` bone under root with one cube | PASS |  |
 | model | hitbox cube = boss.yml > size, centred, on the ground | PASS | 28 x 72 x 28 px (size 1.75 x 4.5 blocks) |
 | model | hitbox cube is not drawn (no textured face) | PASS |  |
@@ -139,6 +146,6 @@
 | model | only the bones shown by a mutation are hidden at rest (visibility off) | PASS | hidden: spit_stump |
 | model | no animation yet (step 3 writes them) | PASS | 0 animations |
 | model | outline = concept in the front, side and back views (except on cubes added in model.yml) | PASS | differs by: front 0 px, side 0 px, back 0 px |
-| model | pixels of the same colour as the concept views | INFO | 4348 of 4988 (87 %); the rest is texture detail added at step 2 |
+| model | pixels of the same colour as the concept views | INFO | 4357 of 4988 (87 %); the rest is texture detail added at step 2 |
 | animation | animations in the model (one per spec name, length = windup + active + recovery) | NOT YET | validator part not written yet (written by the agent of this step, skill §5) |
 | sound | sounds/*.ogg (one per spec name, mono/stereo, loudness, LICENSES.md) | NOT YET | validator part not written yet (written by the agent of this step, skill §5) |

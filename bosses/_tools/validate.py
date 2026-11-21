@@ -565,6 +565,65 @@ def check_concept(spec, boss_dir: Path, rep: Report):
                 f"reach {core_reach} px, half hitbox {hw:g} px")
         rep.add(g, "hitbox height between 75 % and 100 % of the drawn height", 0.75 * top <= hh <= top,
                 f"hitbox {hh:g} px, drawn {top} px ({top / PX_PER_BLOCK:g} blocks), widest reach {reach} px")
+    rig_file = boss_dir / "model.yml"
+    extra_paint = ((load_yaml(rig_file) or {}).get("paint") or []) if rig_file.exists() else []
+    check_readability(spec, rep, parts + [{**p, "paint": True} for p in extra_paint], palette)
+
+
+def check_readability(spec, rep: Report, parts, palette):
+    """Zone readability (skill step 1, ✔ user 2026-11-21): bright = weak, dark = armour, mid = body.
+    A 'bright' colour is a palette colour named *glow*; its dim tone is the *_deep of the same family."""
+    g = "readability"
+    bright = {n for n in palette if "glow" in n}
+    lights = {n for n in bright if n.endswith("_glow")}                      # coloured lights (not white cores)
+    dim = {n.replace("_glow", "_deep") for n in lights} & set(palette)
+    lum = {n: (0.2126 * r + 0.7152 * gg + 0.0722 * b) / 255 for n, (r, gg, b) in palette.items()}
+    darkest = set(sorted(palette, key=lambda n: lum[n])[:2])
+
+    def patch(p):
+        """(short side, area) of the biggest face this part shows."""
+        s = sorted((v for v in p["size"] if v), reverse=True)
+        if p.get("paint") and len(s) < 3:
+            s = (s + [1, 1])[:2]
+        a, b = s[0], s[1] if len(s) > 1 else 1
+        return b, a * b
+
+    bones = {p["bone"] for p in parts}
+    zones = {k: v for k, v in (spec.get("hit_zones") or {}).items() if isinstance(v, dict)}
+    zone_of = {b: zid for zid, z in zones.items() for b in match_bones(z.get("bones"), bones)}
+    weak = {zid for zid, z in zones.items() if (z.get("multiplier") or 1) > 1}
+    target = weak | {zid for zid, z in zones.items() if z.get("break_hp") is not None}
+    armour = {zid for zid, z in zones.items() if (z.get("multiplier") or 1) < 1}
+
+    big = [(patch(p)[1], p) for p in parts if p["color"] in bright and patch(p)[0] >= 2]
+    off_target = sorted({f"{p['bone']} {p['color']} {p['size']}" for _, p in big if zone_of.get(p["bone"]) not in target})
+    if spec.get("kind") == "minion" and not zones:
+        stray = sorted({f"{p['bone']} {p['color']} {p['size']}" for _, p in big if p.get("paint")})
+        rep.add(g, "painted bright details are 1 px wide (bright patches only as eye or pod cubes)", not stray,
+                "; ".join(stray) if stray else f"{len(big)} bright cubes")
+    else:
+        rep.add(g, "bright patches (>= 2x2 px) only on weak points and breakable parts", not off_target,
+                "; ".join(off_target) if off_target else f"{len(big)} bright patches, all on target zones")
+        top = max(big, key=lambda t: t[0], default=None)
+        rep.add(g, "the largest bright patch is on a weak point", bool(top) and zone_of.get(top[1]["bone"]) in weak,
+                f"{top[1]['bone']} {top[1]['color']} ({top[0]} px)" if top else "no bright patch")
+        lacking = sorted(z for z in weak if not any(zone_of.get(p["bone"]) == z for _, p in big))
+        rep.add(g, "every weak point shows a bright patch (>= 2x2 px)", not lacking, ", ".join(lacking))
+        lit = sorted({p["bone"] for p in parts if p["color"] in bright and zone_of.get(p["bone"]) in armour})
+        rep.add(g, "armoured parts carry no bright glow", not lit, ", ".join(lit))
+        unframed = sorted(z for z in weak if not any(zone_of.get(p["bone"]) == z and p.get("paint") and p["color"] in darkest
+                                                     for p in parts))
+        rep.add(g, "every weak point sits in a dark socket or rim (%s)" % "/".join(sorted(darkest)), not unframed,
+                ", ".join(unframed))
+        seamless = sorted(z for z, zz in zones.items() if zz.get("break_hp") is not None and not any(
+            zone_of.get(p["bone"]) == z and p.get("paint") and p["color"] not in bright and lum[p["color"]] >= 0.5 for p in parts))
+        rep.add(g, "every breakable part shows a pale seam", not seamless, ", ".join(seamless))
+    # most of the glow away from the targets is the dim tone (teeth and white cores not counted)
+    rest = [p for p in parts if zone_of.get(p["bone"]) not in target]
+    n_bright = sum(patch(p)[1] for p in rest if p["color"] in lights)
+    n_dim = sum(patch(p)[1] for p in rest if p["color"] in dim)
+    rep.add(g, "away from weak points, most glow is the dim tone (%s)" % "/".join(sorted(dim)), n_bright <= n_dim,
+            f"bright {n_bright} px, dim {n_dim} px")
 
 
 # ---------------------------------------------------------------------------------------- model
