@@ -572,11 +572,11 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 136. ~~**Changing root**~~ — ✔ answered 2026-11-21: changing root **resets the whole tree**.
 
 **Round 27 (2026-11-21)**: answers to OQ 127–136; cooldowns halved, shields time out, effects visible to everyone (vanilla client + resource pack), ≥ 60 nodes per tree; new skill **`skill-tree-building`**. Plan [`docs/builds-and-stats.md`](docs/builds-and-stats.md) §10–11.
-137. **Halved cooldowns, side rules:** defensive effects last at most 50 % of their cooldown; PvP healing received capped at 4 hearts per 10 s; PvE cooldowns halved too (recommended)?
-138. **Effect display:** icon row above the head (custom font on a TextDisplay passenger) + particle shapes for every effect, translucent bubble for shields, glow only for the stun guard (white) and marks (red), own effects as vanilla icons or in the action bar (recommended)?
-139. **Jump crit + random crit on one hit:** ×(M + 0.5), capped ×2.3, shown ✦✦ (recommended), or plain multiplication (up to ×3.24)?
-140. **Absorption in the Regen root:** regen overflow fills absorption (cap 3 hearts PvP / 5 PvE), decays 0.5 heart / 5 s while not hit; healer-given absorption times out (recommended)?
-141. **Node counts:** 30 per root = 12 primary + 6 rune fork sides + 12 shared pool (48 different nodes per tree) (recommended), or 30 own + 12 pool on top (60 different)? ≈ 60 % of a root reachable at level 50; bridge = one rune side + 3 pool nodes (recommended)?
+137. ~~**Halved cooldowns, side rules**~~ — ✔ answered 2026-11-21: yes (uptime ≤ 50 % of the cooldown, PvP healing 4 hearts / 10 s, PvE halved too).
+138. ~~**Effect display**~~ — ✔ answered 2026-11-21: yes (icon row + particles, shield bubble, glow only for stun guard and marks).
+139. ~~**Jump crit + random crit on one hit**~~ — ✔ answered 2026-11-21: yes, ×(M + 0.5) capped ×2.3, shown ✦✦.
+140. ~~**Absorption in the Regen root**~~ — ✔ answered 2026-11-21: yes (overflow → absorption 3 / 5 hearts, decays; healer absorption times out).
+141. ~~**Node counts**~~ — ✔ answered 2026-11-21: **pool inside the 30** (48 different nodes per tree); bridge rule taken as accepted.
 142. **Skill `skill-tree-building`:** run by the main session with the validator and a user gate per job (recommended), or a separate `tree-designer` agent?
 
 ## Changelog

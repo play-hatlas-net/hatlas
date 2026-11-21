@@ -5,7 +5,7 @@ description: Builds the Hatlas job skill trees (Miner, Lumberjack, Hunter, Farme
 
 # Building a Hatlas skill tree
 
-> **Status: process defined 2026-11-21 (round 27).** No tree is written yet.
+> **Status: process defined 2026-11-21 (round 27); rules confirmed round 28 (OQ 137–141).** No tree is written yet.
 > - Sources: [`docs/job-skills.md`](../../../docs/job-skills.md) §3 (shape, roles, method §3.6), [`docs/runes.md`](../../../docs/runes.md) (runes, effects, counters) and [`docs/builds-and-stats.md`](../../../docs/builds-and-stats.md) (roots, stats, cooldowns, display).
 > - Rules marked *(OQ n)* are proposals still waiting for the user. Use the proposed value, and flag it in the step report.
 > - `scripts/job-skills/validate.py` is written at step 5 of the first job (Miner).
@@ -52,7 +52,7 @@ scripts/job-skills/reports/<job>-<n>.md   validator output per iteration
 - **Node counts per root (minimum 30, ✔ user):**
   - 12 primary dedicated nodes, including ≥ 2 combo nodes with other roles and 1 capstone;
   - 6 rune fork nodes (3 forks × 2 sides, one rune per side);
-  - 12 **secondary pool** nodes, the **same set in both roots**, *(OQ 141: or the pool on top of the 30)*.
+  - 12 **secondary pool** nodes, the **same set in both roots**, (✔ OQ 141: the pool counts **inside** the 30).
   - So a tree has ≥ 60 node slots and ≥ 48 different nodes.
 - **Secondary pool** (independent of the root):
   - crit guard (tanks only, several nodes, ✔);
@@ -60,7 +60,7 @@ scripts/job-skills/reports/<job>-<n>.md   validator output per iteration
   - anti-regen (healers, ✔);
   - the former utility branches (Miner *Forge* with **Forger** ✔ and *Siege*; Lumberjack *Carpenter*; Hunter *Tracker*; Farmer *Ranch*; Alchemist *Brewer* / *Arcane*).
 - **Rune forks sit inside each root.** The root sets the style, the rune sets the element.
-- **Bridge nodes:** max 2 per tree, cost ≥ 3. Each needs one rune side + 3 secondary nodes *(OQ 141)* and unlocks a weaker skill of a rune the job does not have.
+- **Bridge nodes:** max 2 per tree, cost ≥ 3. Each needs one rune side + 3 secondary nodes (taken as accepted with OQ 141, round 28) and unlocks a weaker skill of a rune the job does not have.
 - **Choices are permanent.**
   - The Wizard can remove an end node.
   - **Changing root resets the whole tree** (✔ OQ 136).
@@ -68,21 +68,21 @@ scripts/job-skills/reports/<job>-<n>.md   validator output per iteration
 ### 3.2 Points and costs
 - 1 point per job level, max level 50 → **50 points**.
 - Costs: 1 = small stat, 2 = combo or conditional power, 3–5 = capstone or bridge.
-- One root with one side of each fork costs **75–85 points**, so ≈ 60 % of a root is reachable *(OQ 141)*. The validator refuses less than 50 % or more than 70 %.
+- One root with one side of each fork costs **75–85 points**, so ≈ 60 % of a root is reachable (✔ OQ 141). The validator refuses less than 50 % or more than 70 %.
 
 ### 3.3 Stats and caps (PvP / PvE, all in `job-skills.yml > caps`)
 
 | Stat | Root | Cap | Notes |
 |---|---|---|---|
 | Crit chance | Hunter Crit | 40 % | random roll on any hit |
-| Crit damage `M` | Hunter Crit | ×1.8 (start ×1.5) | also boosts the vanilla **jump crit** to ×M (✔). Jump + random crit on one hit = ×(M + 0.5), cap ×2.3 *(OQ 139)* |
+| Crit damage `M` | Hunter Crit | ×1.8 (start ×1.5) | also boosts the vanilla **jump crit** to ×M (✔). Jump + random crit on one hit = ×(M + 0.5), cap ×2.3 (✔) |
 | Vampire | Hunter Vampire | 10 % / 18 % | from final damage |
-| Regen | tank Regen | 0.5 heart/s out of combat, half in combat | job food has a 10 s cooldown; the overflow fills absorption, cap 3 / 5 hearts, decay 0.5/5 s *(OQ 140)* |
+| Regen | tank Regen | 0.5 heart/s out of combat, half in combat | job food has a 10 s cooldown; the overflow fills absorption, cap 3 / 5 hearts, decay 0.5/5 s (✔) |
 | Max health | tank Big health | +5 / +8 hearts | `max_health` attribute |
 | Crit guard | tank pool | −50 % of the crit bonus (−10 %/node) | ✔ named *Crit guard* |
 | Tenacity | tank pool | −30 % control time, never < 0.5 s | |
 | Anti-regen | healer pool | −40 % healing for 4 s, cap −60 % | hits regen, vampire, heals and absorption refill |
-| Healing received from players (PvP) | — | 4 hearts per 10 s *(OQ 137)* | heals reduced while combat-tagged |
+| Healing received from players (PvP) | — | 4 hearts per 10 s (✔) | heals reduced while combat-tagged |
 | Healer and tank damage | — | never reaches the Hunter's | |
 
 **Rune damage never crits and never leeches.**
@@ -107,7 +107,7 @@ Damage order (`builds-and-stats.md` §4.6):
   5. team / big: 30–60 s (22.5–45 s).
 
   A control-blocking shield is tier 5.
-- **Uptime cap:** a self or ally buff lasts ≤ 50 % of its cooldown *(OQ 137)*.
+- **Uptime cap:** a self or ally buff lasts ≤ 50 % of its cooldown (✔).
 - **Shields always time out:** `absorb`, `duration`, `blocks` (✔ round 27). Defaults:
   - plain shield: 2 hearts, 4 s;
   - *Burning shield*: 1.5 hearts, 3 s;
@@ -117,7 +117,7 @@ Damage order (`builds-and-stats.md` §4.6):
 - **Stuns always work.** No diminishing returns. A **1 s stun guard** follows a hard control: a cast during it is refused and its cooldown is kept (✔ OQ 128). Stun lasts 1 s in PvP and 2 s in PvE.
 - No stacking of the same effect (the strongest applies). Zones are telegraphed 0.5 s before they act. PvP values are lower than PvE values.
 - **No cooldown-reduction stat** at launch.
-- **Every effect is visible** *(OQ 138)*. A node must name its display:
+- **Every effect is visible** (✔). A node must name its display:
   - `icon` (glyph in the font `hatlas:effects`);
   - `particles` (shape + rune colour);
   - for shields, `bubble`;

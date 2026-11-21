@@ -335,7 +335,11 @@ User: "at least a minimum of total nodes per tree? Let's start with 60? 30 into 
 
 The validator script `scripts/job-skills/validate.py` enforces these rules. One job is approved at a time (user gate).
 
-## 11. Open questions (round 27, mirrored in `CLAUDE.md`)
+## 11. Open questions of round 27
+
+✔ **Round 28 (2026-11-21, user):** 137 yes (uptime cap 50 %, PvP healing 4 hearts / 10 s, PvE cooldowns halved too) · 138 yes (icons + particles + shield bubble + glow for guard and marks) · 139 yes (×(M + 0.5), cap ×2.3, ✦✦) · 140 yes (regen overflow → absorption 3 / 5 hearts, decay) · 141 **pool inside the 30** (12 primary + 6 rune fork sides + 12 shared = 48 different nodes per tree, ≈ 60 % of a root at level 50). The bridge rule (one rune side + 3 pool nodes) was not answered: **taken as accepted, say if not**. 142 still open.
+
+Original wording:
 
 137. **Halved cooldowns, side rules:** defensive effects last at most 50 % of their cooldown; PvP healing received capped at 4 hearts per 10 s; PvE cooldowns halved too (recommended)?
 138. **Effect display:** icon row above the head (custom font) + particle shapes for every effect, a translucent bubble for shields, glow only for the stun guard (white) and marks (red), own effects as vanilla icons or in the action bar (recommended)?
