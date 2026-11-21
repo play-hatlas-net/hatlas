@@ -57,6 +57,12 @@ Rules:
 - **Hit zones follow the lights** (plan §4.6): a weak point is always one of the glowing things (cyan eyes,
   a lavender sap sac); armoured parts are the dark, hard ones (`root` knots, shins, feet). What a
   mutation tears off leaves a splintered `stem_pale` stump bleeding `lilac_deep` sap.
+- **Zone readability** (skill step 1, ✔ user 2026-11-21): weak-point lights = `cyan_glow` and
+  `lilac_glow` patches of 2 × 2 px or more, with a `glow_core` heart and a `void_dark` socket. Elsewhere
+  these colours appear only as 1 px dots; gill stripes, veins and tendrils use `cyan_deep` with a rare
+  bright pixel. Armour = `bark`/`night_bark`/`root`, no bright glow. A breakable part shows a `stem_pale`
+  seam at its joint. Hit feedback: weak = burst of the zone's glow colour + wet pop; armour = `root`
+  splinters (`dust`/`block` particles) + dull wooden thunk.
 
 ## 3. Silhouette and proportions
 - 1 px = 1/16 block. Cubes on the pixel grid, no rotation at rest except caps and tips.

@@ -129,6 +129,29 @@ blocks the gate.
   before the per-hit cap); at least one **weak point** (glows, reachable in melee at some moment or by
   bow) and one **armoured** part per boss/mini-boss (minions: optional). A zone may have `break_hp`
   (✔ OQ 125): breaking it triggers a mutation early and gives a reward.
+- **Zone readability** (✔ user 2026-11-21): a player must **find every zone without hunting for it**,
+  and the art must not show it. No outlines, no Glowing effect, no markers or text over the boss. The
+  zones are told **implicitly**, in layers, each one inside the dungeon's style:
+  1. **Value hierarchy (contrast):** *bright = weak, dark = armour, mid = body*. The brightest, largest
+     glow patch on the boss is a weak point. Glow elsewhere stays small (1 px dots, thin lines, mostly the
+     dim `*_deep` tones), so it decorates without competing. Armoured parts carry no bright glow.
+  2. **Shape and material:** weak points are soft, round, wet and exposed (an eye, a sac, a pod);
+     armour is hard, layered, knotted, rough; a breakable part shows a **seam** where it will tear (a
+     pale line at its joint).
+  3. **Framing:** a weak point sits in a darker socket or rim that draws the eye to it, like an iris
+     in its eye.
+  4. **Life:** a weak point moves or leaks a little at rest: a sac throbs, sap drips, an eye blinks its
+     light. The boss **guards it** after a hard hit (flinch, covers it) and **opens it** during its punish
+     windows. Both teach "this matters" without words.
+  5. **Hit feedback** (the strongest teacher, no art cost): each zone class answers a hit differently,
+     so a player learns it in 2–3 hits. Weak: a bright burst of the zone's glow colour, a wet "pop", a
+     big damage number. Armour: a dull wooden thunk, dark splinter particles, a small grey number.
+     Breakable: a crack whose pitch rises as `break_hp` drops, plus leaks.
+  6. **Same grammar in every dungeon:** the cue language is the same for all bosses (only the colours
+     change with the palette), so what the first boss teaches works everywhere. Each `style.md` says
+     which colours are the weak-point lights and which material is armour.
+
+  The step report says, for every zone, **how a new player finds it in the first 30 s** (which layers).
 - **Mutations** (plan §4.6, ✔ OQ 124): `mutations` on the **same entity**: `hide_bones` / `show_bones`
   of the same model (mutated parts are drawn in the concept and built in step 2, hidden ones marked),
   a transition `animation`, an `animation_set` swap, moves removed/added, speed. Never kill and respawn.
@@ -180,6 +203,12 @@ blocks the gate.
   - the main `hitbox` bone stays the body hitbox (×1.0 default zone);
   - fallback if the pilot shows BetterModel zone hitboxes do not work: a ray test from the player's eye
     (or the projectile path) against the same boxes, so the boxes are useful either way.
+- **Zone readability in the texture** (step 1 rule, ✔ user 2026-11-21): the weak points hold the
+  **largest bright patches** of the model (the bright glow colours of `style.md` over 2 × 2 px or more);
+  everywhere else bright glow is 1 px dots or 1 px lines, and most glow is the dim `*_deep` tone;
+  armoured parts have none. Each weak point has a darker rim or socket. A breakable part has a pale seam
+  at its joint. Check it on the previews from 10 blocks (a small render): the eye must land on the weak
+  points first.
 - Previews: turntable (8 angles) + front/side next to the concept sheet, so the gate compares them.
 - Blockbench MCP (if installed): only to screenshot the model as Blockbench shows it and to apply small
   edits while the user watches; the file stays the source of truth.
@@ -189,6 +218,8 @@ blocks the gate.
   `windup + active + recovery` ticks (÷ 20 = seconds), with the wind-up pose readable from 10 blocks
   away. Loops: `idle_*`, `walk`, `run`. One-shots: everything else.
 - Keyframes on bones only (no scale on the root), easing kept simple; no clipping through the body.
+- Zone readability (step 1 rule): the idle loops give each weak point a little life (a throb, a twitch);
+  `hurt`/stagger shows the boss guarding the weak point it was hit on; punish windows expose it.
 - Previews: one GIF/MP4 per animation (extend `_tools/render.py`, which already poses bones).
 
 ### Step 4: `boss-sound` (✔ OQ 103: mostly AI generated; tools: plan §4.3, OQ 121)
@@ -204,6 +235,9 @@ blocks the gate.
   effects, −20 for music), converts to `.ogg` (mono for positional sounds, stereo music), and writes the
   `sounds.json` fragment and subtitle keys (EN + FR).
 - `LICENSES.md`: tool, plan, generation date, prompt, take kept. Vanilla sounds only as filler.
+- Zone readability (step 1 rule): one hit sound per zone class, shared by the dungeon's bosses (weak:
+  wet pop; armour: dull wooden thunk; breakable: crack, played at a pitch that rises as it weakens);
+  a zone's own `sound` overrides it.
 - The gate is the user's ears: list each sound with what it should evoke.
 
 ### Step 5: `boss-coder`
@@ -213,6 +247,9 @@ blocks the gate.
   animation + sound + particles + ground warning) → active (hit shape) → recovery; reactions; defences;
   enrage; damage cap. Animations through BetterModel, sounds through the `hatlas` pack.
 - Never changes `boss.yml` on its own: if the spec cannot be built, report it.
+- Zone readability (step 1 rule): every hit on a zone plays its class feedback (sound, particles in the
+  zone's colour, damage-number colour and size, plan `docs/builds-and-stats.md`), and ambient particles
+  on weak points (a sap drip, a spore puff) every few seconds.
 
 ### Step 6: `ingame-tester`
 - Scenarios per boss: spawn, each phase reached by damage, each tell fires before its hit (wind-up ≥ the
