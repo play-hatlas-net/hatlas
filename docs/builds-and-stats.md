@@ -337,7 +337,7 @@ The validator script `scripts/job-skills/validate.py` enforces these rules. One 
 
 ## 11. Open questions of round 27
 
-✔ **Round 28 (2026-11-21, user):** 137 yes (uptime cap 50 %, PvP healing 4 hearts / 10 s, PvE cooldowns halved too) · 138 yes (icons + particles + shield bubble + glow for guard and marks) · 139 yes (×(M + 0.5), cap ×2.3, ✦✦) · 140 yes (regen overflow → absorption 3 / 5 hearts, decay) · 141 **pool inside the 30** (12 primary + 6 rune fork sides + 12 shared = 48 different nodes per tree, ≈ 60 % of a root at level 50). The bridge rule (one rune side + 3 pool nodes) was not answered: **taken as accepted, say if not**. 142 still open.
+✔ **Round 28 (2026-11-21, user):** 137 yes (uptime cap 50 %, PvP healing 4 hearts / 10 s, PvE cooldowns halved too) · 138 yes (icons + particles + shield bubble + glow for guard and marks) · 139 yes (×(M + 0.5), cap ×2.3, ✦✦) · 140 yes (regen overflow → absorption 3 / 5 hearts, decay) · 141 **pool inside the 30** (12 primary + 6 rune fork sides + 12 shared = 48 different nodes per tree, ≈ 60 % of a root at level 50). The bridge rule (one rune side + 3 pool nodes) was not answered: ✔ confirmed by the user. 142 ✔ **main session** runs the skill (no separate agent).
 
 Original wording:
 

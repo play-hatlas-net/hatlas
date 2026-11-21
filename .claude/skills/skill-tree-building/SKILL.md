@@ -10,6 +10,8 @@ description: Builds the Hatlas job skill trees (Miner, Lumberjack, Hunter, Farme
 > - Rules marked *(OQ n)* are proposals still waiting for the user. Use the proposed value, and flag it in the step report.
 > - `scripts/job-skills/validate.py` is written at step 5 of the first job (Miner).
 
+**Who runs it** (✔ OQ 142): the **main session**, no separate agent; the user approves each job (step 6).
+
 Trees are **made from files, not from chat**. Each step reads the files of the previous steps and writes its own, so a step can be re-run and checked by someone who did not make it. **No tree goes into code before the user approves it** (step 6).
 
 ## 1. Sources of truth (never contradict them; if a rule cannot be met, stop and report)
@@ -60,7 +62,7 @@ scripts/job-skills/reports/<job>-<n>.md   validator output per iteration
   - anti-regen (healers, ✔);
   - the former utility branches (Miner *Forge* with **Forger** ✔ and *Siege*; Lumberjack *Carpenter*; Hunter *Tracker*; Farmer *Ranch*; Alchemist *Brewer* / *Arcane*).
 - **Rune forks sit inside each root.** The root sets the style, the rune sets the element.
-- **Bridge nodes:** max 2 per tree, cost ≥ 3. Each needs one rune side + 3 secondary nodes (taken as accepted with OQ 141, round 28) and unlocks a weaker skill of a rune the job does not have.
+- **Bridge nodes:** max 2 per tree, cost ≥ 3. Each needs one rune side + 3 secondary nodes (✔ user, round 28) and unlocks a weaker skill of a rune the job does not have.
 - **Choices are permanent.**
   - The Wizard can remove an end node.
   - **Changing root resets the whole tree** (✔ OQ 136).

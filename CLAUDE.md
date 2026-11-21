@@ -577,7 +577,7 @@ Stripe ─webhook▶ SvelteKit (writes web.tickets)
 139. ~~**Jump crit + random crit on one hit**~~ — ✔ answered 2026-11-21: yes, ×(M + 0.5) capped ×2.3, shown ✦✦.
 140. ~~**Absorption in the Regen root**~~ — ✔ answered 2026-11-21: yes (overflow → absorption 3 / 5 hearts, decays; healer absorption times out).
 141. ~~**Node counts**~~ — ✔ answered 2026-11-21: **pool inside the 30** (48 different nodes per tree); bridge rule taken as accepted.
-142. **Skill `skill-tree-building`:** run by the main session with the validator and a user gate per job (recommended), or a separate `tree-designer` agent?
+142. ~~**Skill `skill-tree-building`**~~ — ✔ answered 2026-11-21: **main session** with the validator and a user gate per job, no separate agent; bridge rule (one rune side + 3 pool nodes) ✔ confirmed.
 
 ## Changelog
 
